@@ -13,7 +13,7 @@ repositories {
 
 kotlin {
     android()
-    iosX64("ios") {
+    ios {
         binaries {
             framework {
                 baseName = "library"
