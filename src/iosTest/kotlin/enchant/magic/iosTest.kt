@@ -1,4 +1,4 @@
-package com.terathought.enchant.library
+package enchant.magic
 
 import kotlin.test.Test
 import kotlin.test.assertTrue

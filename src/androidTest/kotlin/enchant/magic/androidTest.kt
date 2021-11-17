@@ -1,4 +1,4 @@
-package com.terathought.enchant.library
+package enchant.magic
 
 import org.junit.Assert.assertTrue
 import org.junit.Test

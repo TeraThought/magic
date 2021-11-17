@@ -1,4 +1,4 @@
-package com.terathought.enchant.library
+package enchant.magic
 
 expect class Platform() {
     val platform: String
