@@ -1,6 +1,7 @@
 plugins {
     kotlin("multiplatform") version "1.5.31"
     id("com.android.library")
+    id("maven-publish")
 }
 
 group = "com.terathought.enchant"

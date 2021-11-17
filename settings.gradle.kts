@@ -12,5 +12,5 @@ pluginManagement {
         }
     }
 }
-rootProject.name = "Magic"
+rootProject.name = "magic"
 
