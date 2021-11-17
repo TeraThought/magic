@@ -1,7 +1,6 @@
 plugins {
     kotlin("multiplatform") version "1.5.31"
     id("com.android.library")
-    id("kotlin-android-extensions")
 }
 
 group = "com.terathought.enchant"
@@ -9,7 +8,6 @@ version = "1.0.0-alpha01"
 
 repositories {
     google()
-    jcenter()
     mavenCentral()
 }
 
@@ -29,15 +27,18 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
-        val androidMain by getting {
-            dependencies {
-                implementation("com.google.android.material:material:1.2.1")
-            }
-        }
+        val androidMain by getting
+
+        val androidAndroidTestRelease by getting
+        val androidTestFixtures by getting
+        val androidTestFixturesDebug by getting
+        val androidTestFixturesRelease by getting
+
         val androidTest by getting {
-            dependencies {
-                implementation("junit:junit:4.13")
-            }
+            dependsOn(androidAndroidTestRelease)
+            dependsOn(androidTestFixtures)
+            dependsOn(androidTestFixturesDebug)
+            dependsOn(androidTestFixturesRelease)
         }
         val iosMain by getting
         val iosTest by getting
@@ -45,11 +46,11 @@ kotlin {
 }
 
 android {
-    compileSdkVersion(29)
+    compileSdk = 31
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     defaultConfig {
-        minSdkVersion(24)
-        targetSdkVersion(29)
+        minSdk = 24
+        targetSdk = 31
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8

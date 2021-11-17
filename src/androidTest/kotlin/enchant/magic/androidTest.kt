@@ -1,12 +1,12 @@
 package enchant.magic
 
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import kotlin.test.assertTrue
+import kotlin.test.Test
 
 class AndroidGreetingTest {
 
     @Test
     fun testExample() {
-        assertTrue("Check Android is mentioned", Greeting().greeting().contains("Android"))
+        assertTrue(Greeting().greeting().contains("Android"), "Check Android is mentioned")
     }
 }
