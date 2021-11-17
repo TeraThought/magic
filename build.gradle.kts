@@ -12,34 +12,42 @@ repositories {
 }
 
 kotlin {
-    android()
-    ios {
-        binaries {
-            framework {
-                baseName = "library"
-            }
-        }
+    jvm()
+    js {
+        browser()
+        nodejs()
     }
+    android()
+    ios()
+
     sourceSets {
+
         val commonMain by getting
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
             }
         }
+
+        val jvmMain by getting
+        val jvmTest by getting
+
+        val jsMain by getting
+        val jsTest by getting
+
         val androidMain by getting
 
         val androidAndroidTestRelease by getting
         val androidTestFixtures by getting
         val androidTestFixturesDebug by getting
         val androidTestFixturesRelease by getting
-
         val androidTest by getting {
             dependsOn(androidAndroidTestRelease)
             dependsOn(androidTestFixtures)
             dependsOn(androidTestFixturesDebug)
             dependsOn(androidTestFixturesRelease)
         }
+
         val iosMain by getting
         val iosTest by getting
     }
