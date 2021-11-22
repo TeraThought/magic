@@ -33,7 +33,7 @@ open class StatusViewModel<T>() : ViewModel() {
         /** Custom getter function for a [Status] value.
          *
          * Given a status [key] returns the [Status] value in [hashMap]. If none is found, defaults to NotStarted */
-        inline operator fun get(key: T): Status = hashMap[key] ?: NotStarted()
+        operator fun get(key: T): Status = hashMap[key] ?: NotStarted()
 
         /** A [MutableSet] of key-value pairs from [hashMap].
          *
@@ -49,7 +49,7 @@ open class StatusViewModel<T>() : ViewModel() {
          * 2. Refreshes the view
          * 3. Returns the [value] assigned.
          */
-        inline operator fun set(key: T, value: Status): Status {
+        operator fun set(key: T, value: Status): Status {
             hashMap[key] = value
             refresh()
             return value

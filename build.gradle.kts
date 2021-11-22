@@ -23,6 +23,11 @@ kotlin {
 
     sourceSets {
 
+        all {
+            languageSettings.optIn("kotlinx.coroutines.InternalCoroutinesApi")
+            languageSettings.optIn("kotlinx.coroutines.DelicateCoroutinesApi")
+        }
+
         val commonMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1-new-mm-dev2")

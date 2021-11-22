@@ -5,7 +5,6 @@ import platform.darwin.*
 import kotlin.coroutines.CoroutineContext
 
 @ExperimentalCoroutinesApi
-@OptIn(InternalCoroutinesApi::class)
 internal actual val Dispatchers.Background: CoroutineDispatcher get() = object : CoroutineDispatcher(), Delay {
     val queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH.toLong(), 0)
 

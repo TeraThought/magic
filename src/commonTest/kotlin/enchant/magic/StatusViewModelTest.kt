@@ -124,25 +124,22 @@ class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>() {
         Upload
     }
 
-    fun uploadName() {
-        val job = series.addJob {
-
-            status(Key.Name, setLoading = false) {
-                if (name.isEmpty()) error("Name is invalid")
-                if (name.length > 5) error("Name is too long")
-            }
-            status(Key.Upload) {
-                delay(50)
-                //Always completes successfully
-            }
+    fun uploadName() = series.add {
+        status(Name, setLoading = false) {
+            if (name.isEmpty()) error("Name is invalid")
+            if (name.length > 5) error("Name is too long")
+        }
+        status(Upload) {
+            delay(50)
+            //Always completes successfully
         }
     }
 
     fun validateInfo() = series.add {
-        singleStatus(Key.Name, setLoading = false) {
+        singleStatus(Name, setLoading = false) {
             if (name.isEmpty()) error("Name is invalid")
         }
-        singleStatus(Key.Age, setLoading = false) {
+        singleStatus(Age, setLoading = false) {
             if (age < 0) error("Age is invalid")
         }
     }

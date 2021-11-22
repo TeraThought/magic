@@ -4,7 +4,6 @@ import kotlinx.coroutines.*
 import kotlin.coroutines.cancellation.CancellationException
 
 
-@OptIn(InternalCoroutinesApi::class)
 abstract class Series(scope: CoroutineScope) {
 
     init {
@@ -51,14 +50,13 @@ class DefaultSeries(scope: CoroutineScope) : Series(scope) {
     override fun addJob(block: suspend CoroutineScope.() -> Unit): Job = launchScope.launch { block() }
 }
 
-inline fun CoroutineScope.DefaultSeries() = DefaultSeries(this)
+fun CoroutineScope.DefaultSeries() = DefaultSeries(this)
 
 /** Waits for the previous coroutine to finish executing before running the latest coroutine
  *
  * See [Magic Series diagram](https://bit.ly/magic-series) for a timeline flow of different series types
  */
 
-@OptIn(InternalCoroutinesApi::class)
 class QueueSeries(scope: CoroutineScope) : Series(scope) {
 
     init {

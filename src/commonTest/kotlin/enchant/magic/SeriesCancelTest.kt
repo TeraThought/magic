@@ -222,7 +222,7 @@ class SeriesCancelTest {
         delay(20)
         assertEquals(listOf(), output, "Check task 1 has not been executed")
 
-        val job2 = series.addJob { delay(20); output += 2 }
+        series.addJob { delay(20); output += 2 }
         delay(25)
         assertEquals(listOf(2), output, "Check task 2 has been executed")
 
