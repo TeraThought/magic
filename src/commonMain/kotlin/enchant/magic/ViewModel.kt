@@ -3,7 +3,6 @@ package enchant.magic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.CoroutineContext
-import kotlin.jvm.JvmInline
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 

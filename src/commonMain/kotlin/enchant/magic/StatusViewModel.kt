@@ -51,7 +51,8 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
         }
 
         override fun toString(): String =
-            map.toList().sortedBy { it.first.toString() }.joinToString("\n") { "[${it.first}] = ${it.second}" }
+            map.toList().sortedBy { it.first.toString() }
+                .joinToString("\n") { "[${it.first}] = ${it.second}" }
     }
 
 

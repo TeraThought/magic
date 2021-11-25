@@ -25,7 +25,7 @@ sealed class Status {
      * progress isn't supported. Useful for timing actions or showing loading bars.
      */
     data class Loading(override val progress: Float = -1f) : Status() {
-        override fun toString(): String = if(progress == -1f) "Loading" else super.toString()
+        override fun toString(): String = if (progress == -1f) "Loading" else super.toString()
     }
 
     /**
@@ -33,7 +33,7 @@ sealed class Status {
      * @param errorType Emits an error code associated with the issue
      */
     data class Issue(override val errorCode: Int = -1) : Status() {
-        override fun toString(): String = if(errorCode == -1)  "Issue" else super.toString()
+        override fun toString(): String = if (errorCode == -1) "Issue" else super.toString()
     }
 
     /**

@@ -3,7 +3,6 @@ package enchant.magic
 import kotlinx.coroutines.*
 import kotlinx.datetime.Clock
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.coroutines.coroutineContext
 
 
 abstract class Series(scope: CoroutineScope, protected val debug: Boolean) {
@@ -40,7 +39,7 @@ abstract class Series(scope: CoroutineScope, protected val debug: Boolean) {
 
     /** Cancels all of the coroutines added to this series **/
     fun cancel(cause: CancellationException? = null) {
-        if(printChanges) println("$objectLabel cancelled")
+        if (printChanges) println("$objectLabel cancelled")
         launchScope.cancel(cause)
     }
 
@@ -147,9 +146,9 @@ class QueueSeries(scope: CoroutineScope, debug: Boolean = false) : Series(scope,
     override fun addJob(label: String, block: suspend CoroutineScope.() -> Unit): Job {
         val job = Job()
         queue += QueueJob(block, job, label)
-        if(printChanges) {
+        if (printChanges) {
             job.recordOnCompletion(label)
-            if(queue.size > 1) println("$objectLabel: \"$label\" queued")
+            if (queue.size > 1) println("$objectLabel: \"$label\" queued")
         }
         if (queue.size == 1 && !isQueueActive) launchScope.launch {
             isQueueActive = true
@@ -158,7 +157,7 @@ class QueueSeries(scope: CoroutineScope, debug: Boolean = false) : Series(scope,
                 if (!queueJob.job.isCancelled) {
                     if (debug) queueJob.startTimestamp =
                         Clock.System.now().toEpochMilliseconds()
-                    val result = launch(queueJob.job){
+                    val result = launch(queueJob.job) {
                         if (printChanges) println("$objectLabel: \"${queueJob.label}\" started")
                         queueJob.block(this)
                     }
