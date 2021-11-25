@@ -1,11 +1,12 @@
 package enchant.magic
 
+import enchant.magic.SampleStatusViewModel.Key.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
-import enchant.magic.SampleStatusViewModel.Key.*
 
 class StatusViewModelTest {
 
@@ -123,7 +124,9 @@ class StatusViewModelTest {
         assertEquals(
             "$objectLabel states and statuses:\nname = Jeff\nage = 20\n[Age] = Success\n" +
                     "[Name] = Success\n" + "[Upload] = Loading\n(ViewModel) $seriesLabel current " +
-                    "tasks:\n\"noId\" - ** ms", string, "Check that the ViewModel is converted to string properly"
+                    "tasks:\n\"noId\" - ** ms",
+            string,
+            "Check that the ViewModel is converted to string properly"
         )
     }
 }

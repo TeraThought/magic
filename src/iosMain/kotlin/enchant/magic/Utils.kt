@@ -25,4 +25,3 @@ internal actual val Dispatchers.Background: CoroutineDispatcher get() = object :
         }
     }
 }
-actual fun runTest(block: suspend CoroutineScope.() -> Unit) = runBlocking(block = block)

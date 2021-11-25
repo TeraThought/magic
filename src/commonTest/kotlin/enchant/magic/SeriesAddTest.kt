@@ -1,6 +1,7 @@
 package enchant.magic
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
