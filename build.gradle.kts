@@ -26,11 +26,13 @@ kotlin {
         all {
             languageSettings.optIn("kotlinx.coroutines.InternalCoroutinesApi")
             languageSettings.optIn("kotlinx.coroutines.DelicateCoroutinesApi")
+            languageSettings.optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
         }
 
         val commonMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1-new-mm-dev2")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
             }
         }
         val commonTest by getting {

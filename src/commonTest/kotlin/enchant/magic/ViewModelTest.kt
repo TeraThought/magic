@@ -39,13 +39,27 @@ class ViewModelTest {
         viewModel.addRefresh { refreshes += 1 }
         viewModel.name = "Ethan"
         viewModel.reverseName()
-        viewModel.reverseName()
 
         delay(60)
         assertEquals(2, refreshes, "Check two refreshes happened")
         assertEquals(
             "nahtE", viewModel.name,
             "Check the reverseName event only ran once under the default tentative series"
+        )
+    }
+
+    @Test
+    fun printToString() = runTest {
+        viewModel.name = ""
+        viewModel.customName = "Ethan"
+        val string = viewModel.toString()
+        val objectLabel = string.takeWhile { it != ' ' }
+        val seriesLabel = string.split("\n")[3]
+            .dropWhile { it != ' ' }.substring(1).takeWhile { it != ' ' }
+        assertEquals(
+            "$objectLabel states:\nname = \ncustomName = Mr.Ethan\n(ViewModel) " +
+                    "$seriesLabel has no running tasks", string,
+            "Check the ViewModel converts to a string properly"
         )
     }
 
@@ -64,7 +78,7 @@ class ViewModelTest {
     }
 }
 
-class SampleViewModel : ViewModel() {
+class SampleViewModel : ViewModel(true) {
 
     var onCloseActionRan = false //Not a state, used to track when onClose {} runs
     var name by state("")

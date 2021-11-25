@@ -9,24 +9,32 @@ package enchant.magic
 sealed class Status {
 
     /** Represents a not started state, when the operation has not began, and is awaiting action to begin */
-    class NotStarted : Status()
+    class NotStarted : Status() {
+        override fun toString(): String = "NotStarted"
+    }
 
     /**
      * Represents a successful state, when the operation as completed with the expected outcome
      */
-    class Success : Status()
+    class Success : Status() {
+        override fun toString(): String = "Success"
+    }
 
     /** Represents a loading state, when the operation is currently still going on.
      * @param progress The progress of the task in between [0.0, 1.0]. Defaults to -1 if showing
      * progress isn't supported. Useful for timing actions or showing loading bars.
      */
-    class Loading(override val progress: Float = -1f) : Status()
+    data class Loading(override val progress: Float = -1f) : Status() {
+        override fun toString(): String = if(progress == -1f) "Loading" else super.toString()
+    }
 
     /**
      * Represents an error state, when their was an issue with the requested operation
      * @param errorType Emits an error code associated with the issue
      */
-    class Issue(override val errorCode: Int = -1) : Status()
+    data class Issue(override val errorCode: Int = -1) : Status() {
+        override fun toString(): String = if(errorCode == -1)  "Issue" else super.toString()
+    }
 
     /**
      * Returns the progress if the current status is [Loading], crashes otherwise

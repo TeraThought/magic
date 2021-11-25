@@ -44,7 +44,7 @@ class StatusViewModelTest {
 
         viewModel.name = ""
         viewModel.uploadName()
-        delay(15)
+        delay(20)
         assertTrue(
             viewModel[Name].errorCode == 1,
             "Check the name status is Issue and has the error code 1"
@@ -106,9 +106,29 @@ class StatusViewModelTest {
         )
         assertEquals(3, refreshes, "Check that 2 refreshes happened")
     }
+
+    @Test
+    fun printToString() = runTest {
+        viewModel.name = "Jeff"
+        viewModel.age = 20
+        viewModel.validateInfo()
+        viewModel.uploadName()
+        delay(20)
+        var string = viewModel.toString()
+        val objectLabel = string.takeWhile { it != ' ' }
+        val seriesLabel = string.split("\n")[6].dropWhile { it != ' ' }.substring(1)
+            .takeWhile { it != ' ' }
+        val time = string.takeLast(6).take(4).trim()
+        string = string.replace(time, "**")
+        assertEquals(
+            "$objectLabel states and statuses:\nname = Jeff\nage = 20\n[Age] = Success\n" +
+                    "[Name] = Success\n" + "[Upload] = Loading\n(ViewModel) $seriesLabel current " +
+                    "tasks:\n\"noId\" - ** ms", string, "Check that the ViewModel is converted to string properly"
+        )
+    }
 }
 
-class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>() {
+class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
 
     var name by state("")
     var age by state(-1)

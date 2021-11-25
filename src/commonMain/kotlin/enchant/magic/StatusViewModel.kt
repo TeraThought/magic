@@ -2,14 +2,13 @@ package enchant.magic
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Extends [ViewModel], which handles state and manages asynchronous tasks (coroutines).
  */
-open class StatusViewModel<T>() : ViewModel() {
+open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
 
     /** Calls [StatusMap.get] for a given status [key].
      *
@@ -25,23 +24,19 @@ open class StatusViewModel<T>() : ViewModel() {
     /** A structure that pairs status keys (identifiers for things whose status needs to be tracked) to [Status] values (the actual [Status]es themselves).
      *
      * @param refresh A lambda returning unit. To be called each time a status key is added/changed. Typically refreshes the view.*/
-    protected class StatusMap<T>(val refresh: () -> Unit) {
+    protected inner class StatusMap<T>(val refresh: () -> Unit) {
         /** A mutable map ("hash"map) that pairs a generic key ("T") to a [Status] value*/
-        val hashMap = hashMapOf<T, Status>()
+        val map = hashMapOf<T, Status>()
 
 
         /** Custom getter function for a [Status] value.
          *
-         * Given a status [key] returns the [Status] value in [hashMap]. If none is found, defaults to NotStarted */
-        operator fun get(key: T): Status = hashMap[key] ?: NotStarted()
+         * Given a status [key] returns the [Status] value in [map]. If none is found, defaults to NotStarted */
+        operator fun get(key: T): Status = map[key] ?: NotStarted()
 
-        /** A [MutableSet] of key-value pairs from [hashMap].
-         *
-         * Makes for easier iteration. */
-        val entries: MutableSet<MutableMap.MutableEntry<T, Status>> = hashMap.entries
 
-        /** Maintains all keys in [hashMap] but resets all [Status] values to NotStarted */
-        fun reset() = hashMap.clear()
+        /** Maintains all keys in [map] but resets all [Status] values to NotStarted */
+        fun reset() = map.clear()
 
 
         /** Given a status [key] and a [Status] [value]:
@@ -49,12 +44,14 @@ open class StatusViewModel<T>() : ViewModel() {
          * 2. Refreshes the view
          * 3. Returns the [value] assigned.
          */
-        operator fun set(key: T, value: Status): Status {
-            hashMap[key] = value
+        operator fun set(key: T, value: Status) {
+            map[key] = value
+            if (printChanges) println("$objectLabel: [$key] = $value")
             refresh()
-            return value
         }
 
+        override fun toString(): String =
+            map.toList().sortedBy { it.first.toString() }.joinToString("\n") { "[${it.first}] = ${it.second}" }
     }
 
 
@@ -81,7 +78,7 @@ open class StatusViewModel<T>() : ViewModel() {
         key: T, setLoading: Boolean = true,
         action: suspend () -> Unit
     ): Status {
-        val scope :CoroutineScope = this
+        val scope: CoroutineScope = this
         if (!isActive) return statuses[key]
         if (setLoading) statuses[key] = Loading()
         val actionStatus = mapResult(
@@ -114,5 +111,13 @@ open class StatusViewModel<T>() : ViewModel() {
 
         statuses[key] = actionStatus
         return actionStatus
+    }
+
+    override fun toString(): String {
+        return if (!debug) super.toString() else {
+            "$objectLabel states and statuses:\n" + states.toList().joinToString("\n")
+            { "${it.first} = ${it.second()}" } + "\n" + (listOf(series) + additionalSeries)
+                .joinToString("\n") { "(ViewModel) $series" }
+        }
     }
 }

@@ -10,12 +10,37 @@ import kotlin.reflect.KProperty
 /** Foundational class for ViewModels.
  *
  * Handles state and manages asynchronous tasks via coroutines ([CoroutineScope]).*/
-open class ViewModel : CoroutineScope {
+open class ViewModel(val debug: Boolean = false) : CoroutineScope {
 
     /** Used for specifying when we want to run tasks as a background thread */
     final override val coroutineContext: CoroutineContext = Dispatchers.Background + Job()
 
-    protected var series: Series = CancelTentativeSeries()
+    protected open var series: Series = DefaultSeries(debug)
+    protected val additionalSeries: MutableList<Series> = mutableListOf()
+
+    protected fun DefaultSeries(): DefaultSeries {
+        val series = DefaultSeries(debug)
+        additionalSeries += series
+        return series
+    }
+
+    protected fun QueueSeries(): QueueSeries {
+        val series = QueueSeries(debug)
+        additionalSeries += series
+        return series
+    }
+
+    protected fun CancelRunningSeries(): CancelRunningSeries {
+        val series = CancelRunningSeries(debug)
+        additionalSeries += series
+        return series
+    }
+
+    protected fun CancelTentativeSeries(): CancelTentativeSeries {
+        val series = CancelTentativeSeries(debug)
+        additionalSeries += series
+        return series
+    }
 
     /** [MutableList] of lambdas (returning [Unit]) that are called when any state changes*/
     val refreshes: MutableList<() -> Unit> = mutableListOf()
@@ -63,17 +88,61 @@ open class ViewModel : CoroutineScope {
         initialValue: T,
         get: State<T>.() -> T = { value },
         set: State<T>.(T) -> Unit = { value = it }
-    ): State<T> = State(initialValue, get) { set(it); refresh() }
+    ): State<T> = State(initialValue, get, set)
 
-}
+    /** Container for key properties of any state.*/
+    inner class State<T>(
+        var value: T,
+        var get: State<T>.() -> T,
+        var set: State<T>.(T) -> Unit,
+    ) : ReadWriteProperty<Any?, T> {
 
-/** Container for key properties of any state.*/
-class State<T>(
-    var value: T,
-    var get: State<T>.() -> T,
-    var set: State<T>.(T) -> Unit,
-) : ReadWriteProperty<Any?, T> {
+        private var added = false
+        private lateinit var name: String
 
-    override fun getValue(thisRef: Any?, property: KProperty<*>): T = get()
-    override fun setValue(thisRef: Any?, property: KProperty<*>, value: T): Unit = set(value).let { }
+
+        override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+            if (debug) {
+                if (!added) {
+                    name = property.name
+                    states[name] = { value.toString() }
+                    added = true
+                }
+            }
+            return get()
+        }
+
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+            set(value)
+            if (debug) {
+                if (!added) {
+                    name = property.name
+                    states[name] = { this.value.toString() }
+                    added = true
+                }
+                if (printChanges) println("$objectLabel: $name = ${this.value}")
+            }
+            refresh()
+        }
+    }
+
+    protected val objectLabel by lazy { super.toString().takeLastWhile { it != '.' } }
+
+    protected val states: MutableMap<String, () -> String> by lazy { mutableMapOf() }
+
+    override fun toString(): String {
+        return if (!debug) super.toString() else {
+            "$objectLabel states:\n" + states.toList().joinToString("\n")
+            { "${it.first} = ${it.second()}" } + "\n" + (listOf(series) + additionalSeries)
+                .joinToString("\n") { "(ViewModel) $series" }
+        }
+    }
+
+    protected var printChanges = false
+
+    open fun printChanges(enabled: Boolean) {
+        if (!debug && enabled) throw error("Cannot enable printChanges in non-debug mode")
+        printChanges = enabled
+        (listOf(series) + additionalSeries).forEach { it.printChanges(enabled) }
+    }
 }
