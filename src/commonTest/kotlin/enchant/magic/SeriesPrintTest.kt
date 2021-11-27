@@ -4,7 +4,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class SeriesPrintTest {
     @Test
@@ -36,28 +35,25 @@ class SeriesPrintTest {
             "Check the series has no tasks running"
         )
 
-        series.add("Task 1") { delay(60) }
-        delay(20)
+        series.add("Task 1") { delay(70) }
+        delay(30)
         string = series.toString()
         var time = string.takeLast(6).take(4).filter { it.isDigit() }.toInt()
-        assertTrue(time > 9, "Check Task 1 has been running for more than 9 seconds")
         string = string.replace(" $time ", " ** ")
         assertEquals(
             "DefaultSeries@$objectId current tasks:\n\"Task 1\" - ** ms", string,
             "Check Task 1 is displayed correctly"
         )
 
-        series.add { delay(75) }
-        delay(20)
+        series.add { delay(85) }
+        delay(30)
         string = series.toString()
-        println("")
         val (task1Output, noIdOutput) = string.split("\n").run { get(1) to get(2) }
 
         time = task1Output.takeLast(6).take(4).filter { it.isDigit() }.toInt()
         string = string.replace(" $time ", " ** ")
 
         time = noIdOutput.takeLast(6).take(4).filter { it.isDigit() }.toInt()
-        assertTrue(time > 9, "Check noId has been running for more than 9 seconds")
         string = string.replace(" $time ", " ** ")
 
         assertEquals(
@@ -65,12 +61,10 @@ class SeriesPrintTest {
             string, "Check Task 1 and noId are displayed correctly"
         )
 
-        delay(30)
+        delay(40)
 
         string = series.toString()
-        println(string)
         time = string.takeLast(6).take(4).filter { it.isDigit() }.toInt()
-        assertTrue(time > 9, "Check noId has been running for more than 9 seconds")
         string = string.replace(" $time ", " ** ")
         assertEquals(
             "DefaultSeries@$objectId current tasks:\n\"noId\" - ** ms",
@@ -102,7 +96,6 @@ class SeriesPrintTest {
 
         string = series.toString()
         var time = string.takeLast(6).take(4).filter { it.isDigit() }.toInt()
-        assertTrue(time > 9, "Check Task 1 has been running for more than 9 seconds")
         string = string.replace(" $time ", " ** ")
         assertEquals(
             "QueueSeries@$objectId queued tasks:\n\"Task 1\" - ** ms", string,
@@ -130,7 +123,6 @@ class SeriesPrintTest {
         string = series.toString()
         val noIdOutput = string.split("\n")[1]
         time = noIdOutput.takeLast(6).take(4).filter { it.isDigit() }.toInt()
-        assertTrue(time > 9, "Check noId has been running for more than 9 seconds")
         string = string.replace(" $time ", " ** ")
         assertEquals(
             "QueueSeries@$objectId queued tasks:\n\"noId\" - ** ms\n\"Task 3\"",
@@ -162,7 +154,6 @@ class SeriesPrintTest {
 
         string = series.toString()
         var time = string.takeLast(6).take(4).filter { it.isDigit() }.toInt()
-        assertTrue(time > 9, "Check Task 1 has been running for more than 9 seconds")
         string = string.replace(" $time ", " ** ")
         assertEquals(
             "CancelRunningSeries@$objectId running task:\n\"Task 1\" - ** ms", string,
@@ -173,7 +164,6 @@ class SeriesPrintTest {
         delay(20)
         string = series.toString()
         time = string.takeLast(6).take(4).filter { it.isDigit() }.toInt()
-        assertTrue(time > 9, "Check noId has been running for more than 9 seconds")
         string = string.replace(" $time ", " ** ")
         assertEquals(
             "CancelRunningSeries@$objectId running task:\n\"noId\" - ** ms", string,
@@ -206,7 +196,6 @@ class SeriesPrintTest {
 
         string = series.toString()
         var time = string.takeLast(6).take(4).filter { it.isDigit() }.toInt()
-        assertTrue(time > 9, "Check Task 1 has been running for more than 9 seconds")
         string = string.replace(" $time ", " ** ")
         assertEquals(
             "CancelTentativeSeries@$objectId running task:\n\"Task 1\" - ** ms", string,
