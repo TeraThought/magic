@@ -1,6 +1,8 @@
 package enchant.magic
 
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -70,7 +72,7 @@ class ViewModelTest {
         viewModel.addRefresh { refreshes++ }
         viewModel.name = "Ethan"
         viewModel.reverseName()
-        viewModel.close()
+        viewModel.cancel()
         delay(50)
 
         assertEquals(1, refreshes, "Check a refresh happened")
@@ -93,6 +95,6 @@ class SampleViewModel : ViewModel(true) {
     }
 
     init {
-        onClose { onCloseActionRan = true }
+        coroutineContext.job.invokeOnCompletion { onCloseActionRan = true }
     }
 }

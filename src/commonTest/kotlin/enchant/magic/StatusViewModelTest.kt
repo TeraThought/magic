@@ -1,6 +1,7 @@
 package enchant.magic
 
 import enchant.magic.SampleStatusViewModel.Key.*
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -98,7 +99,7 @@ class StatusViewModelTest {
         viewModel.name = "Ethan"
         viewModel.uploadName()
         delay(5)
-        viewModel.close()
+        viewModel.cancel()
         delay(80)
 
         assertIs<Loading>(

@@ -6,81 +6,125 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-/** Foundational class for ViewModels.
+/** Foundational class for a MVVM ViewModel component which has the core functionality needed to
+ * architect a high-quality application:
+ * - Hosts its own CoroutineScope on a background thread (via [Dispatchers.Background]) that allows
+ * for simple asynchronous coroutine work and built-in cancellation via [ViewModel.cancel]
  *
- * Handles state and manages asynchronous tasks via coroutines ([CoroutineScope]).*/
+ * ```
+ * //That's it!
+ * fun myEvent(): Unit = launch {
+ *      ...async work
+ * }
+ * ```
+ *
+ * - Has a default [series] that can be customized to run coroutines in a more flexible manner. Also
+ * allows additional [Series] to be added to the ViewModel via specific helpers (
+ * ex. [ViewModel.DefaultSeries])
+ *
+ * ```
+ * //Instant queuing or tapjack prevention!
+ * fun myComplexEvent() = series.add {
+ *      ...async work
+ * }
+ * init {
+ *     series = QueueSeries() //Queueing
+ *     series = CancelTentativeSeries() //Tapjack prevention
+ * }
+ *
+ * ```
+ *
+ * - A simple and flexible [state] system that allows state changes to update Views and other UI
+ * observers via [ViewModel.addRefresh]
+ * ```
+ * //Short and sweet!
+ * var name by state("")
+ * ```
+ *
+ * - A [debug] mode which enables in-depth [ViewModel.toString] and [ViewModel.printChanges] methods.
+ * The debug mode also propagates to the ViewModel's series.
+ *
+ * @param Enables debug mode which allows [ViewModel.toString] and [ViewModel.printChanges] to run
+ * properly. Debug mode may affect performance so it is not recommended in release builds
+ */
+@Suppress("UNREACHABLE_CODE")
 open class ViewModel(val debug: Boolean = false) : CoroutineScope {
 
-    /** Used for specifying when we want to run tasks as a background thread */
-    final override val coroutineContext: CoroutineContext = Dispatchers.Background + Job()
+    /**
+     * The "environment" of the ViewModel's [CoroutineScope]. Can be customized to a different
+     * dispatcher by overriding this value. For tests, the coroutine context should be swapped out
+     * to use [Dispatchers.Main].
+     */
+    override val coroutineContext: CoroutineContext = Dispatchers.Background + Job()
 
-    protected open var series: Series = DefaultSeries(debug)
-    protected val additionalSeries: MutableList<Series> = mutableListOf()
+    protected val allSeries: MutableList<Series> = mutableListOf()
 
+    /**
+     * A [Series] that comes with the ViewModel. It is set to be a [DefaultSeries] by default, but
+     * can be customized to any other type of series by setting the value.
+     */
+    protected open var series: Series = DefaultSeries()
+        set(value) {
+            allSeries.remove(field)
+            field = value
+        }
+
+    /** Convenience that creates a [DefaultSeries] which inherits the [CoroutineScope] and [debug]
+     * behavior of the [ViewModel].
+     */
     protected fun DefaultSeries(): DefaultSeries {
         val series = DefaultSeries(debug)
-        additionalSeries += series
+        if (debug) allSeries += series
         return series
     }
 
+    /** Convenience that creates a [QueueSeries] which inherits the [CoroutineScope] and [debug]
+     * behavior of the [ViewModel].
+     */
     protected fun QueueSeries(): QueueSeries {
         val series = QueueSeries(debug)
-        additionalSeries += series
+        if (debug) allSeries += series
         return series
     }
 
+    /** Convenience that creates a [CancelRunningSeries] which inherits the [CoroutineScope] and [debug]
+     * behavior of the [ViewModel].
+     */
     protected fun CancelRunningSeries(): CancelRunningSeries {
         val series = CancelRunningSeries(debug)
-        additionalSeries += series
+        if (debug) allSeries += series
         return series
     }
 
+    /** Convenience that creates a [CancelTentativeSeries] which inherits the [CoroutineScope] and [debug]
+     * behavior of the [ViewModel].
+     */
     protected fun CancelTentativeSeries(): CancelTentativeSeries {
         val series = CancelTentativeSeries(debug)
-        additionalSeries += series
+        if (debug) allSeries += series
         return series
     }
 
-    /** [MutableList] of lambdas (returning [Unit]) that are called when any state changes*/
-    val refreshes: MutableList<() -> Unit> = mutableListOf()
+    private val refreshes: MutableList<() -> Unit> = mutableListOf()
 
-    /** Adds an [action] (lambda returning [Unit]) to [onRefreshes] so it's called any state refreshes */
-    fun addRefresh(action: () -> Unit) {
-        refreshes += action
+    /** Adds an [refresh] to be called when the [ViewModel] [refresh]es*/
+    fun addRefresh(refresh: () -> Unit) {
+        refreshes += refresh
     }
 
-    /** Used when state changes to refresh views or associated observers.
-     *
-     * Runs each refresh within [onRefreshes] **/
+    /** To be called when a ViewModel state changes. Calls all of the refreshes added to the
+     * [ViewModel] using [addRefresh] */
     protected fun refresh() {
         refreshes.forEach { it.invoke() }
     }
 
-    /** To be called when the view no longer needs a particular ViewModel (e.g. moves to a different screen)
+
+    /** Creates a reactive state that will [refresh] the [ViewModel] when its value changes
      *
-     * Runs each function within [onCloseActions]
-     *
-     * Stops the [CoroutineScope] and ends all running tasks. Relies on [CoroutineScope.cancel]. */
-    open fun close() {
-        onCloseActions.forEach { it.invoke() }
-        cancel("${this::class.simpleName}  and its children coroutines were canceled")
-    }
-
-    /** [MutableList] of lambdas (returning [Unit]) that are called when the ViewModel is closed*/
-    private val onCloseActions = mutableListOf<() -> Unit>()
-
-    /** Adds an lambda returning [Unit] ([onClose]) to [onCloseActions] so it's called when the ViewModel is closed*/
-    protected fun onClose(onClose: () -> Unit) {
-        onCloseActions += onClose
-    }
-
-
-    /** Creates a reactive state that will refresh the ViewModel when its value changes
-     *
-     * @param initialValue The initial (default) value of a state
+     * @param initialValue The initial (default) value of the state
      * @param get Custom getter function for the state. Defaults to returning the state's value. Cannot
      * change type of state.
-     * @param set Custom setter function for the state. Defaults to assigning whatever is passed in.
+     * @param set Custom setter function for the state. Defaults to assigning what is passed in.
      * Cannot change type of state.
      */
     protected fun <T> state(
@@ -89,7 +133,6 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
         set: State<T>.(T) -> Unit = { value = it }
     ): State<T> = State(initialValue, get, set)
 
-    /** Container for key properties of any state.*/
     inner class State<T>(
         var value: T,
         var get: State<T>.() -> T,
@@ -129,19 +172,47 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
 
     protected val states: MutableMap<String, () -> String> by lazy { mutableMapOf() }
 
+    /**
+     * If [debug] mode is enabled, the string output will contain all of [ViewModel]'s associated
+     * states and series. Otherwise the string output will be the standard object [toString].
+     *
+     * Here is a sample of the [toString] output in [debug] mode:
+     * ```
+     * ViewModel@7fbdb894 states:
+     * name = Michael
+     * age = 27
+     * (ViewModel) DefaultSeries@119cbf96 has no running tasks
+     * ```
+     */
     override fun toString(): String {
         return if (!debug) super.toString() else {
             "$objectLabel states:\n" + states.toList().joinToString("\n")
-            { "${it.first} = ${it.second()}" } + "\n" + (listOf(series) + additionalSeries)
+            { "${it.first} = ${it.second()}" } + "\n" + allSeries
                 .joinToString("\n") { "(ViewModel) $series" }
         }
     }
 
     protected var printChanges = false
 
+    /**
+     * Enables or disables the option to print out all changes from [state]s and changes from
+     * connected series. Only works if [debug] mode is enabled.
+     *
+     * Note: This method should be called after all ViewModel series have been created.
+     *
+     * Sample output of [printChanges] in [debug] mode:
+     * ```
+     * ViewModel@7ceb3185: name = Jen
+     * ViewModel@7ceb3185: name = Natalie
+     * DefaultSeries@402c3df5: "upload" started
+     * ```
+     *
+     * @param enabled Whether state and series changes should be printed out
+     * @throws kotlin.IllegalStateException if printChanges attempts to be enabled from non-[debug] mode.
+     */
     open fun printChanges(enabled: Boolean) {
         if (!debug && enabled) throw error("Cannot enable printChanges in non-debug mode")
         printChanges = enabled
-        (listOf(series) + additionalSeries).forEach { it.printChanges(enabled) }
+        allSeries.forEach { it.printChanges(enabled) }
     }
 }
