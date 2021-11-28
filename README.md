@@ -1,3 +1,4 @@
+![Tada](https://user-images.githubusercontent.com/74328946/143792081-e7d93a4c-4ef5-4698-98f1-08d7bda85341.gif)
 # Magic
 Simple, lightweight, modular components and utilities to help conjure your app architecture. Built with Kotlin coroutines to provide flexible
 asynchronous behavior.
