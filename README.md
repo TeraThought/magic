@@ -73,5 +73,5 @@ class MyStatusViewModel: StatusViewModel<MyStatusViewModel.Key>() {
 ```
 ## Coming Soon!
 * Native bindings to use ViewModels within iOS and Android apps
-* More examples and use-cases to demonstrate [Series], [ViewModel], [Status] and [StatusViewModel]
+* More examples and use-cases to demonstrate `Series`, `ViewModel`, `Status` and `StatusViewModel`
 * More primitives to solve structural problems in Kotlin Multiplatform
