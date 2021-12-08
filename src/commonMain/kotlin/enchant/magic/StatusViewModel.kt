@@ -3,7 +3,7 @@ package enchant.magic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
-import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CancellationException
 
 /**
  * A more advanced version of [ViewModel] that integrates [Status] to represent the progress of

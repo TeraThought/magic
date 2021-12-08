@@ -2,7 +2,7 @@ package enchant.magic
 
 import kotlinx.coroutines.*
 import kotlinx.datetime.Clock
-import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CancellationException
 
 /** Adds coroutines in a queue, where each coroutine is executed one at a time, so that only one
  * coroutine is active at a time. The coroutines are executed in the order they were added.

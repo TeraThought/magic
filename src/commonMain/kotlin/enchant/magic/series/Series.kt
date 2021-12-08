@@ -2,7 +2,7 @@ package enchant.magic
 
 import kotlinx.coroutines.*
 import kotlinx.datetime.Clock
-import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CancellationException
 
 /**
  * Tools for managing the order of execution of [add]ed coroutines. [Series] is the general
