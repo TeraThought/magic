@@ -11,5 +11,8 @@ pluginManagement {
             }
         }
     }
+    plugins {
+        `kotlin-dsl`
+    }
 }
 rootProject.name = "magic"
