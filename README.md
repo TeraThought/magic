@@ -1,3 +1,4 @@
+![Maven metadata URL](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Frepo1.maven.org%2Fmaven2%2Fcom%2Fterathought%2Fenchant%2Fmagic%2Fmaven-metadata.xml&style=for-the-badge)
 ![Tada](https://user-images.githubusercontent.com/74328946/143792081-e7d93a4c-4ef5-4698-98f1-08d7bda85341.gif)
 # Magic
 Simple, lightweight, modular components and utilities to help conjure your app architecture. Built with Kotlin coroutines to provide flexible
