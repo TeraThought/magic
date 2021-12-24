@@ -1,7 +1,6 @@
 package enchant.magic
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.CancellationException
 
@@ -16,7 +15,7 @@ import kotlinx.coroutines.CancellationException
  * - The [status] and [singleStatus] builders are able to track the progress of running code and
  * output to a given status state. This allows for automatic error handling, assuming that functions
  * from MVVM models throw errors. These errors are caught and converted to the [Issue] type via
- * [mapResult], which can be overloaded to add conversion to [Status.errorCode].
+ * [mapResult], which can be overloaded to add conversion to [Status.code].
  *
  * - Includes status states within the status map in [ViewModel.toString] and [ViewModel.printChanges]
  */

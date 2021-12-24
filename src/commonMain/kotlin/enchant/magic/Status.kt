@@ -26,11 +26,11 @@ sealed class Status {
 
     /**
      * Represents an error state, when executing the operation caused an error to occur
-     * @param errorCode An error code associated with the encountered error. Defaults to -1 if error
+     * @param code An error code associated with the encountered error. Defaults to -1 if error
      * codes aren't supported.
      */
-    data class Issue(override val errorCode: Int = -1) : Status() {
-        override fun toString(): String = if (errorCode == -1) "Issue" else super.toString()
+    data class Issue(override val message: String = "", override val code: Int = -1) : Status() {
+        override fun toString(): String = if (code == -1) "Issue" else super.toString()
     }
 
     /**
@@ -39,9 +39,13 @@ sealed class Status {
     open val progress: Float get() = (this as Loading).progress
 
     /**
-     * Returns the [Issue.errorCode] if the current status is [Issue], crashes otherwise
+     * Returns the [Issue.message] if the current status is [Issue], crashes otherwise
      */
-    open val errorCode: Int get() = (this as Issue).errorCode
+    open val message: String get() = (this as Issue).message
+    /**
+     * Returns the [Issue.code] if the current status is [Issue], crashes otherwise
+     */
+    open val code: Int get() = (this as Issue).code
 }
 
 /** @see Status.NotStarted*/

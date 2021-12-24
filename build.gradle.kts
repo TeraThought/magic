@@ -38,14 +38,14 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1-new-mm-dev2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0-RC")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0")
             }
         }
 

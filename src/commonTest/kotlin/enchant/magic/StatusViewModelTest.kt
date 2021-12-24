@@ -48,7 +48,7 @@ class StatusViewModelTest {
         viewModel.uploadName()
         delay(20)
         assertTrue(
-            viewModel[Name].errorCode == 1,
+            viewModel[Name].code == 1,
             "Check the name status is Issue and has the error code 1"
         )
         assertIs<NotStarted>(viewModel[Upload], "Check the upload status is NotStarted")
@@ -57,7 +57,7 @@ class StatusViewModelTest {
         viewModel.uploadName()
         delay(10)
         assertEquals(
-            2, viewModel[Name].errorCode,
+            2, viewModel[Name].code,
             "Check the name status is Issue and has the error code 2"
         )
         assertIs<NotStarted>(viewModel[Upload], "Check the upload status is NotStarted")
@@ -173,7 +173,7 @@ class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
     * */
     override fun mapResult(result: Result<Unit>): Status = when (true) {
         result.isSuccess -> Success()
-        result.exceptionOrNull()!!.message == "Name is invalid" -> Issue(1)
-        else -> Issue(2)
+        result.exceptionOrNull()!!.message == "Name is invalid" -> Issue(code = 1)
+        else -> Issue(code  = 2)
     }
 }
