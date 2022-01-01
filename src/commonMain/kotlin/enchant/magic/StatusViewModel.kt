@@ -90,14 +90,12 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
     ): Status {
         if (!isActive) return statuses[key]
         if (setLoading) statuses[key] = Loading()
-        val actionStatus = mapResult(
-            try {
-                Result.success(action())
-            } catch (t: Throwable) {
-                if (t is CancellationException) return statuses[key]
-                Result.failure(t)
-            }
-        )
+        val actionStatus: Status = try {
+            mapResult(Result.success(action()))
+        } catch (t: Throwable) {
+            if (t is CancellationException) return statuses[key]
+            if (t is IssueException) t.issue else mapResult(Result.failure(t))
+        }
         statuses[key] = actionStatus
         if (actionStatus is Issue) throw CancellationException("status() encountered an issue")
         return actionStatus
@@ -110,21 +108,19 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
      * outside of a coroutine or when status operations are independent of each other.
      *
      * @see status
-    */
+     */
     protected fun singleStatus(
         key: T, setLoading: Boolean = true,
         action: () -> Unit
     ): Status {
         if (setLoading) statuses[key] = Loading()
 
-        val actionStatus = mapResult(
-            try {
-                Result.success(action())
-            } catch (t: Throwable) {
-                if (t is CancellationException) return statuses[key]
-                Result.failure(t)
-            }
-        )
+        val actionStatus: Status = try {
+            mapResult(Result.success(action()))
+        } catch (t: Throwable) {
+            if (t is CancellationException) return statuses[key]
+            if (t is IssueException) t.issue else mapResult(Result.failure(t))
+        }
 
         statuses[key] = actionStatus
         return actionStatus

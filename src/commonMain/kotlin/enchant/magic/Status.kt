@@ -42,6 +42,7 @@ sealed class Status {
      * Returns the [Issue.message] if the current status is [Issue], crashes otherwise
      */
     open val message: String get() = (this as Issue).message
+
     /**
      * Returns the [Issue.code] if the current status is [Issue], crashes otherwise
      */
@@ -59,3 +60,9 @@ typealias Success = Status.Success
 
 /** @see Status.Issue*/
 typealias Issue = Status.Issue
+
+internal class IssueException(val issue: Status.Issue) :
+    Exception("Issue exception with $issue is meant to be caught within a StatusViewModel")
+
+fun issue(message: String = "", code: Int = -1): Nothing =
+    throw IssueException(Issue(message, code))
