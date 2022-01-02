@@ -12,7 +12,10 @@ pluginManagement {
         }
     }
     plugins {
-        `kotlin-dsl`
+        id("com.android.library") version "7.0.3"
+        kotlin("android") version "1.6.0"
     }
 }
+include(":magic")
+includeBuild("convention-plugins")
 rootProject.name = "magic"

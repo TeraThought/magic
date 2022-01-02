@@ -1,18 +1,20 @@
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.tasks.bundling.Jar
-import org.gradle.kotlin.dsl.`maven-publish`
-import org.gradle.kotlin.dsl.signing
-import java.util.*
-
 plugins {
-    kotlin("multiplatform") version "1.6.0"
+    kotlin("multiplatform")
     id("com.android.library")
-    `maven-publish`
-    signing
+    kotlin("native.cocoapods")
+    id("convention.publication")
 }
 
 group = "com.terathought.enchant"
 version = "1.0.0-alpha02"
+
+val compose_version = "1.0.5"
+
+rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
+    rootProject.the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().nodeVersion =
+        "16.0.0"
+}
+
 
 repositories {
     google()
@@ -22,11 +24,22 @@ repositories {
 kotlin {
     jvm()
     js {
-        browser()
+        browser {
+            testTask {
+                useMocha()
+            }
+        }
         nodejs()
     }
     android()
     ios()
+    iosSimulatorArm64()
+    cocoapods {
+        ios.deploymentTarget = "13.5"
+
+        summary = "Magic"
+        homepage = "https://github.com/terathought/magic"
+    }
 
     sourceSets {
 
@@ -65,6 +78,13 @@ kotlin {
 
         val iosMain by getting
         val iosTest by getting
+
+        val iosSimulatorArm64Main by getting {
+            dependsOn(iosMain)
+        }
+        val iosSimulatorArm64Test by getting {
+            dependsOn(iosTest)
+        }
     }
 }
 
@@ -78,6 +98,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = compose_version
     }
 }
 
