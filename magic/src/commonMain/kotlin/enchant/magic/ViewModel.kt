@@ -55,7 +55,7 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
      * dispatcher by overriding this value. For tests, the coroutine context should be swapped out
      * to use [Dispatchers.Main].
      */
-    override val coroutineContext: CoroutineContext = Dispatchers.Background + Job()
+    override val coroutineContext: CoroutineContext = Dispatchers.Main + Job()
 
     protected val allSeries: MutableList<Series> = mutableListOf()
 
