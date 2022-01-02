@@ -109,12 +109,11 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
      *
      * @see status
      */
-    protected fun singleStatus(
+    protected inline fun singleStatus(
         key: T, setLoading: Boolean = true,
         action: () -> Unit
     ): Status {
         if (setLoading) statuses[key] = Loading()
-
         val actionStatus: Status = try {
             mapResult(Result.success(action()))
         } catch (t: Throwable) {

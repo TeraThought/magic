@@ -1,83 +1,12 @@
-import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.tasks.bundling.Jar
-import org.gradle.kotlin.dsl.`maven-publish`
-import org.gradle.kotlin.dsl.signing
-import java.util.*
-
-plugins {
-    kotlin("multiplatform") version "1.6.0"
-    id("com.android.library")
-    `maven-publish`
-    signing
-}
-
-group = "com.terathought.enchant"
-version = "1.0.0-alpha02"
-
-repositories {
-    google()
-    mavenCentral()
-}
-
-kotlin {
-    jvm()
-    js {
-        browser()
-        nodejs()
+buildscript {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
     }
-    android()
-    ios()
-
-    sourceSets {
-
-        all {
-            languageSettings.optIn("kotlinx.coroutines.InternalCoroutinesApi")
-            languageSettings.optIn("kotlinx.coroutines.DelicateCoroutinesApi")
-            languageSettings.optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
-        }
-
-        val commonMain by getting {
-            dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
-            }
-        }
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0")
-            }
-        }
-
-        val jvmMain by getting
-        val jvmTest by getting
-
-        val jsMain by getting
-        val jsTest by getting
-
-        val androidMain by getting
-
-        val androidAndroidTestRelease by getting
-
-        val androidTest by getting {
-            dependsOn(androidAndroidTestRelease)
-        }
-
-        val iosMain by getting
-        val iosTest by getting
-    }
-}
-
-android {
-    compileSdk = 31
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    defaultConfig {
-        minSdk = 24
-        targetSdk = 31
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.0")
+        classpath("com.android.tools.build:gradle:7.1.0-beta05")
     }
 }
 
@@ -85,7 +14,5 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        gradlePluginPortal()
-        maven(url = "https://maven.pkg.jetbrains.space/public/p/kotlinx-coroutines/maven")
     }
 }

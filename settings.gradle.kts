@@ -7,7 +7,7 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.namespace == "com.android") {
-                useModule("com.android.tools.build:gradle:7.0.3")
+                useModule("com.android.tools.build:gradle:7.0.4")
             }
         }
     }
@@ -16,6 +16,6 @@ pluginManagement {
         kotlin("android") version "1.6.0"
     }
 }
-include(":magic")
+include(":magic", ":sample", ":sampleAndroidApp", ":sampleShared")
 includeBuild("convention-plugins")
 rootProject.name = "magic"

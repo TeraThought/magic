@@ -1,10 +1,10 @@
 package enchant.magic
 
 /** [Status] is a general-purpose construct that is meant to track the progress of any given task. */
-sealed class Status {
+sealed class Status(val type: StatusType) {
 
     /** Represents when an operation has not began, and is awaiting action to begin */
-    class NotStarted : Status() {
+    class NotStarted : Status(StatusType.NotStarted) {
         override fun toString(): String = "NotStarted"
     }
 
@@ -13,14 +13,12 @@ sealed class Status {
      * @param progress The progress of the operation as a percentage between [0.0, 1.0]. Defaults to
      * -1 if showing [progress] isn't supported.
      */
-    data class Loading(override val progress: Float = -1f) : Status() {
-        override fun toString(): String = if (progress == -1f) "Loading" else super.toString()
-    }
+    data class Loading(override val progress: Float = -1f) : Status(StatusType.Loading)
 
     /**
      * Represents a successful state, when the operation has completed with the expected outcome
      */
-    class Success : Status() {
+    class Success : Status(StatusType.Success) {
         override fun toString(): String = "Success"
     }
 
@@ -29,9 +27,7 @@ sealed class Status {
      * @param code An error code associated with the encountered error. Defaults to -1 if error
      * codes aren't supported.
      */
-    data class Issue(override val message: String = "", override val code: Int = -1) : Status() {
-        override fun toString(): String = if (code == -1) "Issue" else super.toString()
-    }
+    data class Issue(override val message: String = "", override val code: Int = -1) : Status(StatusType.Issue)
 
     /**
      * Returns the [Loading.progress] if the current status is [Loading], crashes otherwise
@@ -49,6 +45,9 @@ sealed class Status {
     open val code: Int get() = (this as Issue).code
 }
 
+//Allows Kotlin/Native users to read the types of statuses
+enum class StatusType { NotStarted, Loading, Success, Issue }
+
 /** @see Status.NotStarted*/
 typealias NotStarted = Status.NotStarted
 
@@ -61,7 +60,7 @@ typealias Success = Status.Success
 /** @see Status.Issue*/
 typealias Issue = Status.Issue
 
-internal class IssueException(val issue: Status.Issue) :
+class IssueException(val issue: Status.Issue) :
     Exception("Issue exception with $issue is meant to be caught within a StatusViewModel")
 
 fun issue(message: String = "", code: Int = -1): Nothing =

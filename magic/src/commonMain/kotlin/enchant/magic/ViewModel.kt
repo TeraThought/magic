@@ -215,4 +215,9 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
         printChanges = enabled
         allSeries.forEach { it.printChanges(enabled) }
     }
+
+    fun cancel() {
+        if (debug) println("$this cancelled with ViewModel.cancel()")
+        this.cancel("$this cancelled with ViewModel.cancel()")
+    }
 }
