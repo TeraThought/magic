@@ -4,12 +4,11 @@ plugins {
 }
 
 val compose_version = "1.1.0-rc01"
-val kotlin_version = "1.6.0"
 
 android {
     compileSdk = 32
     defaultConfig {
-        applicationId = "enchant.magic.sample.android"
+        applicationId = "enchant.magic.sample"
         minSdk = 21
         targetSdk = 32
         versionCode = 1
@@ -28,8 +27,6 @@ android {
 
 dependencies {
     implementation(project(":sampleShared"))
-
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version")
 
     implementation("androidx.compose.ui:ui:$compose_version")
     implementation("androidx.compose.material:material:$compose_version")
