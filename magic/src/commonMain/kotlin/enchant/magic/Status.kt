@@ -27,7 +27,8 @@ sealed class Status(val type: StatusType) {
      * @param code An error code associated with the encountered error. Defaults to -1 if error
      * codes aren't supported.
      */
-    data class Issue(override val message: String = "", override val code: Int = -1) : Status(StatusType.Issue)
+    data class Issue(override val message: String = "", override val code: Int = -1) :
+        Status(StatusType.Issue)
 
     /**
      * Returns the [Loading.progress] if the current status is [Loading], crashes otherwise
@@ -45,7 +46,7 @@ sealed class Status(val type: StatusType) {
     open val code: Int get() = (this as Issue).code
 }
 
-//Allows Kotlin/Native users to read the types of statuses
+/** Identifier so Kotlin/Native consumers can read the type of different [Status]es*/
 enum class StatusType { NotStarted, Loading, Success, Issue }
 
 /** @see Status.NotStarted*/
@@ -60,8 +61,15 @@ typealias Success = Status.Success
 /** @see Status.Issue*/
 typealias Issue = Status.Issue
 
+/** An exception that is carries an [Issue] and is expected to be caught within a [StatusViewModel.status]
+ * or [StatusViewModel.singleStatus] so the issue can be stored in a ViewModel status */
 class IssueException(val issue: Status.Issue) :
     Exception("Issue exception with $issue is meant to be caught within a StatusViewModel")
 
+/** Throws an [Issue] that is expected to be caught by [StatusViewModel.status] or
+ * [StatusViewModel.singleStatus]. This can be called from anywhere, but the call chain should
+ * always rise up to a ViewModel status builder.
+ * @param message The error message of the caused issue
+ * @param code The error code of the caused issue */
 fun issue(message: String = "", code: Int = -1): Nothing =
     throw IssueException(Issue(message, code))
