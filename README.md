@@ -1,79 +1,26 @@
-![Maven metadata URL](https://img.shields.io/maven-metadata/v?color=A97BFF&metadataUrl=https%3A%2F%2Frepo1.maven.org%2Fmaven2%2Fcom%2Fterathought%2Fenchant%2Fmagic%2Fmaven-metadata.xml)
+![Maven](https://img.shields.io/maven-metadata/v?color=A97BFF&metadataUrl=https%3A%2F%2Frepo1.maven.org%2Fmaven2%2Fcom%2Fterathought%2Fenchant%2Fmagic%2Fmaven-metadata.xml)
 
 ![Tada](https://user-images.githubusercontent.com/74328946/143792081-e7d93a4c-4ef5-4698-98f1-08d7bda85341.gif)
 # Magic
 Simple, lightweight, modular components and utilities to help conjure your app architecture. Built with Kotlin coroutines to provide flexible
 asynchronous behavior.
 
-## Series
-Kotlin CoroutineScopes by default are useful, but cannot control the order of execution of added coroutines and do not have much debugging behavior. Series
-solves these problems by providing cohesive APIs for executing coroutines in different orders and viewing running coroutines.
+Learn about magic's APIs in the [Overivew](docs/Overview.md)
 
+## Installation
+Magic is hosted on Maven Central, simply add the following line to your build.gradle.kts 
 ```kotlin
-val series = QueueSeries() //Executes added coroutines one at a time
-val firstJob = series.addJob { delay(20) println("#1 done") }
-val secondJob = series.addJob { delay(10) println("#2 done") }
-
-//prints #1 done, then #2 done
-
+implementation("com.terathought.enchant:magic:1.0.0-alpha02")
 ```
+Also, add the utilities from the sample app (see below) to your project in order to observe ViewModels
+from Compose and SwiftUI clients.
 
+## Sample
 
-## ViewModel
+Want to see what magic looks like in a real project? The project includes a sample KMM project alongside
+the library so simply building the project (or opening the sampleIosApp folder in Xcode) allows you
+to run the sample app. Here are the important source files that power the demo:
+- [SampleViewModel.kt](sampleShared/src/commonMain/kotlin/enchant/magic/sample/SampleViewModel.kt) - Demonstrates how to implement ViewModel states and StatusViewModel statuses
+- [MainActivity.java](sampleAndroidApp/src/main/java/enchant/magic/sample/MainActivity.kt) - Includes required Android utilities and a sample UI using `SampleViewModel` 
+- [iOSApp.swift](sampleIosApp/sampleIosApp/iOSApp.swift) - Includes required iOS utilities and a sample UI using `SampleViewModel`
 
-Most ViewModel libraries focus more on state abstraction than developer efficiency. However, Magic's ViewModel API simplifies the process of making a
-ViewModel down to short, readable lines of code. It comes with its own CoroutineScope, observable refresh system, and embeds a series for more efficient
-workflows.
-
-```kotlin
-class MyViewModel: ViewModel() {
-  var name by state("")
-  var age by state(0)
-
-  fun uploadInfo() = series.add {
-    model.uploadInfo(name, data)
-  }
-  
-  init {
-    series = CancelTentativeSeries() //Prevents multiple calls from starting multiple operations
-  }
-}
-```
-
-## Status
-
-A opinionated data structure for tracking the progress of operations. It comes with four different variants: `NotStarted`, `Loading`, `Success` and `Issue`.
-
-## StatusViewModel
-
-An extension of `ViewModel` that smoothly integrates `Status`. `StatusViewModel` automatically bundles status states together (via the status map)
-for simple maintainability and readability. `StatusViewModel` also automatically creates `Status` objects from running code and updates status states.
-
-```kotlin
-class MyStatusViewModel: StatusViewModel<MyStatusViewModel.Key>() {
-
-  //Status states can be accessed by the View with viewModel[Key.Name] or viewModel.get(Key.Name)
-  enum class Key { Name, Upload }
-
-  var name by state("")
-  var age by state(0)
-
-  //Validates the user's name and records the result (without intermediary loading) in the "Name" status
-  fun validateName() = series.add {
-    status(Key.Name, setLoading = false) {
-      if(name.isEmpty()) error("Name cannot be empty")
-    }
-  }
-
-  //Uploads user data and tracks its progress in the "Upload" status
-  fun upload() = series.add {
-    if(get(Key.Name) is Success) status(Upload) {
-      model.uploadInfo(name, age) //Assumes model function throws an error if it fails
-    }
-  }
-}
-```
-## Coming Soon!
-* Native bindings to use ViewModels within iOS and Android apps
-* More examples and use-cases to demonstrate `Series`, `ViewModel`, `Status` and `StatusViewModel`
-* More primitives to solve structural problems in Kotlin Multiplatform
