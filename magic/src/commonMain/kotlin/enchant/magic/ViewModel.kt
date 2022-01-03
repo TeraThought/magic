@@ -47,7 +47,6 @@ import kotlin.reflect.KProperty
  * @param Enables debug mode which allows [ViewModel.toString] and [ViewModel.printChanges] to run
  * properly. Debug mode may affect performance so it is not recommended in release builds
  */
-@Suppress("UNREACHABLE_CODE")
 open class ViewModel(val debug: Boolean = false) : CoroutineScope {
 
     /**
@@ -211,7 +210,7 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
      * @throws kotlin.IllegalStateException if printChanges attempts to be enabled from non-[debug] mode.
      */
     open fun printChanges(enabled: Boolean) {
-        if (!debug && enabled) throw error("Cannot enable printChanges in non-debug mode")
+        if (!debug && enabled) error("Cannot enable printChanges in non-debug mode")
         printChanges = enabled
         allSeries.forEach { it.printChanges(enabled) }
     }
