@@ -22,12 +22,12 @@ import kotlinx.coroutines.CancellationException
 open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
 
     /**
-     * Returns the associated [Status] value for the [key]. If the status state at the current key
+     * Returns the associated [Status] value for the [k]. If the status state at the current key
      * has not been set yet, [NotStarted] is returned
      *
-     * @param key The unique status key/identifier that identifies the status state to access
+     * @param k The unique status key/identifier that identifies the status state to access
      */
-    operator fun get(key: T): Status = statuses[key]
+    operator fun get(k: T): Status = statuses[k]
 
     protected val statuses = StatusMap<T>(::refresh)
 
