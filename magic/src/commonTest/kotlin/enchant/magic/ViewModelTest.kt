@@ -1,9 +1,9 @@
 package enchant.magic
 
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.job
+import kotlinx.coroutines.*
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.runTest
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -79,9 +79,28 @@ class ViewModelTest {
         assertEquals(true, viewModel.onCloseActionRan, "Check the custom onClose action ran")
         assertEquals("Ethan", viewModel.name, "Check the reverseName event was canceled")
     }
+
+    @Test
+    fun await() = runTest {
+        viewModel.name = ""
+        viewModel.await {
+            viewModel.name = "Ethan"
+        }
+        viewModel.name = "Ethan"
+        viewModel.reverseName()
+        viewModel.await()
+        assertEquals("nahtE", viewModel.name)
+
+        viewModel.reverseName()
+        viewModel.await()
+        assertEquals("Ethan", viewModel.name)
+    }
 }
 
 class SampleViewModel : ViewModel(true) {
+
+    override val coroutineContext: CoroutineContext
+        get() = TestCoroutineScheduler() + Job()
 
     var onCloseActionRan = false //Not a state, used to track when onClose {} runs
     var name by state("")

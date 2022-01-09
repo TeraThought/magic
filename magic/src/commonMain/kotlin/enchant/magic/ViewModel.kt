@@ -3,7 +3,9 @@ package enchant.magic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
 import kotlin.properties.ReadWriteProperty
+import kotlin.random.Random
 import kotlin.reflect.KProperty
 
 /** Foundational class for a MVVM ViewModel component which has the core functionality needed to
@@ -104,17 +106,27 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
         return series
     }
 
-    private val refreshes: MutableList<() -> Unit> = mutableListOf()
+    private val refreshes: MutableMap<Int, () -> Unit> = mutableMapOf()
+    private val removes: MutableSet<Int> = mutableSetOf()
+    private var refreshing: Boolean = false
 
     /** Adds an [refresh] to be called when the [ViewModel] [refresh]es*/
     fun addRefresh(refresh: () -> Unit) {
-        refreshes += refresh
+        refreshes[Random.nextInt()] = refresh
     }
 
     /** To be called when a ViewModel state changes. Calls all of the refreshes added to the
      * [ViewModel] using [addRefresh] */
     protected fun refresh() {
-        refreshes.forEach { it.invoke() }
+        if (!refreshing) {
+            refreshing = true
+            refreshes.values.forEach { it.invoke() }
+            if (removes.isNotEmpty()) {
+                removes.forEach { refreshes.remove(it) }
+                refreshes.clear()
+            }
+            refreshing = false
+        }
     }
 
 
@@ -218,5 +230,23 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
     fun cancel() {
         if (debug) println("$this cancelled with ViewModel.cancel()")
         this.cancel("$this cancelled with ViewModel.cancel()")
+    }
+
+    /**
+     * Suspends (stops execution of) the current code until the [ViewModel] changes. The await()
+     * call will resume execution when a ViewModel state changes or any other kind of ViewModel
+     * refresh occurs.
+     *
+     * @param block ViewModel changes that are "awaited" to be happen. ViewModel changes should be
+     * put in the block if they execute without delay and very quickly (particularly during tests).
+     * This ensures that await() is registered before the ViewModel changes happen and not afterwards.
+     */
+    suspend fun await(block: (() -> Unit)? = null): Unit = suspendCancellableCoroutine { c ->
+        val id = Random.nextInt()
+        refreshes[id] = {
+            removes.add(id)
+            c.resume(Unit)
+        }
+        block?.invoke()
     }
 }
