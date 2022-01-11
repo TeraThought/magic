@@ -10,3 +10,4 @@ import kotlinx.coroutines.Dispatchers
  * - Kotlin/JS utilizes Dispatchers.Default (sorry, I can't work miracles :( )
  */
 expect val Dispatchers.Background: CoroutineDispatcher
+val Background: CoroutineDispatcher get() = Dispatchers.Background
