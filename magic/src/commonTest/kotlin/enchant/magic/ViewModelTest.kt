@@ -42,8 +42,7 @@ class ViewModelTest {
         viewModel.addRefresh { refreshes += 1 }
         viewModel.name = "Ethan"
         viewModel.reverseName()
-
-        delay(60)
+        viewModel.await()
         assertEquals(2, refreshes, "Check two refreshes happened")
         assertEquals(
             "nahtE", viewModel.name,
@@ -98,9 +97,6 @@ class ViewModelTest {
 }
 
 class SampleViewModel : ViewModel(true) {
-
-    override val coroutineContext: CoroutineContext
-        get() = TestCoroutineScheduler() + Job()
 
     var onCloseActionRan = false //Not a state, used to track when onClose {} runs
     var name by state("")

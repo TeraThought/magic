@@ -53,10 +53,14 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
 
     /**
      * The "environment" of the ViewModel's [CoroutineScope]. Can be customized to a different
-     * dispatcher by overriding this value. For tests, the coroutine context should be swapped out
-     * to use [Dispatchers.Main].
+     * dispatcher by overriding this value.
      */
-    override val coroutineContext: CoroutineContext = Dispatchers.Main + Job()
+    override val coroutineContext: CoroutineContext = try {
+        (Dispatchers.Main + Job()).also {launch {  }}
+    } catch (e: Exception) {
+        if(debug) println("Using Dispatchers.Default because no main dispatcher was found")
+        Dispatchers.Default + Job()
+    }
 
     protected val allSeries: MutableList<Series> = mutableListOf()
 

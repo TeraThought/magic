@@ -1,12 +1,8 @@
 package enchant.magic
 
 import enchant.magic.SampleStatusViewModel.Key.*
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.runTest
-import kotlin.coroutines.CoroutineContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -120,6 +116,7 @@ class StatusViewModelTest {
         viewModel.uploadName()
         delay(20)
         var string = viewModel.toString()
+        println(string)
         val objectLabel = string.takeWhile { it != ' ' }
         val seriesLabel = string.split("\n")[6].dropWhile { it != ' ' }.substring(1)
             .takeWhile { it != ' ' }
@@ -136,9 +133,6 @@ class StatusViewModelTest {
 }
 
 class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
-
-    override val coroutineContext: CoroutineContext
-        get() = TestCoroutineScheduler() + Job()
 
     var name by state("")
     var age by state(-1)
