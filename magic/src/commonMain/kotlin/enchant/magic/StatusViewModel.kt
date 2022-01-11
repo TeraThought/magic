@@ -142,9 +142,8 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
      */
     override fun toString(): String {
         return if (!debug) super.toString() else {
-            "$objectLabel states and statuses:\n" + states.toList().joinToString("\n")
-            { "${it.first} = ${it.second()}" } + "\n" + allSeries
-                .joinToString("\n") { "(ViewModel) $series" }
+            "$objectLabel states and statuses:\n" + states.toList().joinToString("\n", postfix = "\n")
+            { "${it.first} = ${it.second()}" } + "$statuses\n" + allSeries.joinToString("\n")
         }
     }
 }

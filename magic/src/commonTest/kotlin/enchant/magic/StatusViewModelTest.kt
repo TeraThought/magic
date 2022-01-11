@@ -114,17 +114,16 @@ class StatusViewModelTest {
         viewModel.age = 20
         viewModel.validateInfo()
         viewModel.uploadName()
-        delay(20)
+        delay(40)
         var string = viewModel.toString()
         println(string)
         val objectLabel = string.takeWhile { it != ' ' }
-        val seriesLabel = string.split("\n")[6].dropWhile { it != ' ' }.substring(1)
-            .takeWhile { it != ' ' }
+        val seriesLabel = string.split("\n")[6].takeWhile { it != ' ' }
         val time = string.takeLast(6).take(4).trim()
         string = string.replace(time, "**")
         assertEquals(
             "$objectLabel states and statuses:\nname = Jeff\nage = 20\n[Age] = Success\n" +
-                    "[Name] = Success\n" + "[Upload] = Loading\n(ViewModel) $seriesLabel current " +
+                    "[Name] = Success\n" + "[Upload] = Loading(progress=-1.0)\n$seriesLabel current " +
                     "tasks:\n\"noId\" - ** ms",
             string,
             "Check that the ViewModel is converted to string properly"

@@ -56,10 +56,9 @@ class ViewModelTest {
         viewModel.customName = "Ethan"
         val string = viewModel.toString()
         val objectLabel = string.takeWhile { it != ' ' }
-        val seriesLabel = string.split("\n")[3]
-            .dropWhile { it != ' ' }.substring(1).takeWhile { it != ' ' }
+        val seriesLabel = string.split("\n")[3].takeWhile { it != ' ' }
         assertEquals(
-            "$objectLabel states:\nname = \ncustomName = Mr.Ethan\n(ViewModel) " +
+            "$objectLabel states:\nname = \ncustomName = Mr.Ethan\n" +
                     "$seriesLabel has no running tasks", string,
             "Check the ViewModel converts to a string properly"
         )

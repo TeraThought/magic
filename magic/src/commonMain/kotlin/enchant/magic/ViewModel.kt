@@ -56,13 +56,13 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
      * dispatcher by overriding this value.
      */
     override val coroutineContext: CoroutineContext = try {
-        (Dispatchers.Main + Job()).also {launch {  }}
+        (Dispatchers.Main + Job()).also { launch { } }
     } catch (e: Exception) {
-        if(debug) println("Using Dispatchers.Default because no main dispatcher was found")
+        if (debug) println("Using Dispatchers.Default because no main dispatcher was found")
         Dispatchers.Default + Job()
     }
 
-    protected val allSeries: MutableList<Series> = mutableListOf()
+    protected val allSeries: ArrayDeque<Series> = ArrayDeque()
 
     /**
      * A [Series] that comes with the ViewModel. It is set to be a [DefaultSeries] by default, but
@@ -70,7 +70,7 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
      */
     protected open var series: Series = DefaultSeries()
         set(value) {
-            allSeries.remove(field)
+            allSeries[0] = (field)
             field = value
         }
 
@@ -189,21 +189,21 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
 
     /**
      * If [debug] mode is enabled, the string output will contain all of [ViewModel]'s associated
-     * states and series. Otherwise the string output will be the standard object [toString].
+     * states and series. Otherwise the string output will be the standard object [toString]. The
+     * first series that is print out will be the embedded series provided by the ViewModel
      *
      * Here is a sample of the [toString] output in [debug] mode:
      * ```
      * ViewModel@7fbdb894 states:
      * name = Michael
      * age = 27
-     * (ViewModel) DefaultSeries@119cbf96 has no running tasks
+     * DefaultSeries@119cbf96 has no running tasks
      * ```
      */
     override fun toString(): String {
         return if (!debug) super.toString() else {
-            "$objectLabel states:\n" + states.toList().joinToString("\n")
-            { "${it.first} = ${it.second()}" } + "\n" + allSeries
-                .joinToString("\n") { "(ViewModel) $series" }
+            "$objectLabel states:\n" + states.toList().joinToString("\n", postfix = "\n")
+                { "${it.first} = ${it.second()}" } + allSeries.joinToString()
         }
     }
 
