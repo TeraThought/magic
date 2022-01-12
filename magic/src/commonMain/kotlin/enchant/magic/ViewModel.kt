@@ -112,7 +112,7 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
 
     private val refreshes: MutableMap<Int, () -> Unit> = mutableMapOf()
     private val removes: MutableSet<Int> = mutableSetOf()
-    private var refreshing: Boolean = false
+    private var isRefreshing: Boolean = false
 
     /** Adds an [refresh] to be called when the [ViewModel] [refresh]es*/
     fun addRefresh(refresh: () -> Unit) {
@@ -122,14 +122,14 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
     /** To be called when a ViewModel state changes. Calls all of the refreshes added to the
      * [ViewModel] using [addRefresh] */
     protected fun refresh() {
-        if (!refreshing) {
-            refreshing = true
+        if (!isRefreshing) {
+            isRefreshing = true
             refreshes.values.forEach { it.invoke() }
             if (removes.isNotEmpty()) {
                 removes.forEach { refreshes.remove(it) }
                 refreshes.clear()
             }
-            refreshing = false
+            isRefreshing = false
         }
     }
 
@@ -144,42 +144,39 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
      */
     protected fun <T> state(
         initialValue: T,
+        name: String? = null,
         get: State<T>.() -> T = { value },
         set: State<T>.(T) -> Unit = { value = it }
-    ): State<T> = State(initialValue, get, set)
+    ): State<T> = State(initialValue, name, get, set)
 
     inner class State<T>(
         var value: T,
+        var name: String?,
         var get: State<T>.() -> T,
         var set: State<T>.(T) -> Unit,
     ) : ReadWriteProperty<Any?, T> {
 
         private var added = false
-        private lateinit var name: String
 
 
         override fun getValue(thisRef: Any?, property: KProperty<*>): T {
-            if (debug) {
-                if (!added) {
-                    name = property.name
-                    states[name] = { value.toString() }
-                    added = true
-                }
+            if (!added) {
+                name = name ?: property.name
+                states[name!!] = { value.toString() }
+                added = true
             }
             return get()
         }
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
             set(value)
-            if (debug) {
-                if (!added) {
-                    name = property.name
-                    states[name] = { this.value.toString() }
-                    added = true
-                }
-                if (printChanges) println("$objectLabel: $name = ${this.value}")
+            if (!added) {
+                name = name ?: property.name
+                states[name!!] = { value.toString() }
+                added = true
             }
-            refresh()
+            if (printChanges) println("$objectLabel: $name = ${this.value}")
+            if (name!! !in _blockedStates) refresh()
         }
     }
 
@@ -203,7 +200,7 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
     override fun toString(): String {
         return if (!debug) super.toString() else {
             "$objectLabel states:\n" + states.toList().joinToString("\n", postfix = "\n")
-                { "${it.first} = ${it.second()}" } + allSeries.joinToString()
+            { "${it.first} = ${it.second()}" } + allSeries.joinToString()
         }
     }
 
@@ -234,6 +231,23 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
     fun cancel() {
         if (debug) println("$this cancelled with ViewModel.cancel()")
         this.cancel("$this cancelled with ViewModel.cancel()")
+    }
+
+    /**
+     * Prevents multiple refreshes from happening when writing to multiple states. After the code
+     * in the [block] is executed, a single refresh will happen to display the updated changes.
+     *
+     * @param states The names of the states that will be explicitly blocked from refreshing
+     * @param block Code that sets the [states]. If user-input states are being changed, it is
+     * recommended this code executes very quickly without long operations so that the state does not
+     * appear as "frozen."
+     */
+    protected var _blockedStates = setOf<String>()
+    protected inline fun commit(vararg states: String, block: (() -> Unit)) {
+        _blockedStates = states.toSet()
+        block()
+        refresh()
+        _blockedStates = setOf()
     }
 
     /**

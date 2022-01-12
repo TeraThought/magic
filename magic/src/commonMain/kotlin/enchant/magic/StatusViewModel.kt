@@ -3,6 +3,7 @@ package enchant.magic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ensureActive
 
 /**
  * A more advanced version of [ViewModel] that integrates [Status] to represent the progress of
@@ -29,9 +30,9 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
      */
     operator fun get(k: T): Status = statuses[k]
 
-    protected val statuses = StatusMap<T>(::refresh)
+    protected val statuses = StatusMap(::refresh)
 
-    protected inner class StatusMap<T>(val refresh: () -> Unit) {
+    protected inner class StatusMap(val refresh: () -> Unit) {
         val map = hashMapOf<T, Status>()
 
         operator fun get(key: T): Status = map[key] ?: NotStarted()
@@ -41,10 +42,12 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
         fun reset() = map.clear()
 
         /** Updates the value of the status state at the given [key] and refreshes the ViewModel */
-        operator fun set(key: T, value: Status) {
+        operator fun set(key: T, value: Status) = set(key, value, refresh = true)
+
+        fun set(key: T, value: Status, refresh: Boolean = true) {
             map[key] = value
             if (printChanges) println("$objectLabel: [$key] = $value")
-            refresh()
+            if (refresh && key !in _blockedStatuses) refresh()
         }
 
         override fun toString(): String =
@@ -77,52 +80,51 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
      * running. This mimics the traditional "throw error" behavior but only affects the current coroutine.
      *
      * @param key The unique key of the status state you want to change
-     * @param setLoading If true, sets status to [Status.Loading] when the code is running. Make
+     * @param loading If true, sets status to [Status.Loading] when the code is running. Make
      * false for super quick [action]s where loading UI isn't helpful.
+     * @param throws If true, the status will throw a coroutine [CancellationException] and not execute
+     * the code after if the resulting status is [Issue]. Status builder must be run in a coroutine.
      * @param action Lambda containing the actual code to run and monitor.
      *
-     * @see singleStatus
      */
 
-    protected suspend fun CoroutineScope.status(
-        key: T, setLoading: Boolean = true,
-        action: suspend () -> Unit
+    protected inline fun status(
+        key: T?,
+        loading: Boolean = true,
+        throws: Boolean = true,
+        action: () -> Unit
     ): Status {
-        if (!isActive) return statuses[key]
-        if (setLoading) statuses[key] = Loading()
+        if (loading) statuses[key!!] = Loading()
         val actionStatus: Status = try {
             mapResult(Result.success(action()))
         } catch (t: Throwable) {
-            if (t is CancellationException) return statuses[key]
             if (t is IssueException) t.issue else mapResult(Result.failure(t))
         }
-        statuses[key] = actionStatus
-        if (actionStatus is Issue) throw CancellationException("status() encountered an issue")
+        if(key != null) statuses[key] = actionStatus
+        if (actionStatus is Issue && throws) throw CancellationException("status() encountered an issue")
         return actionStatus
     }
 
     /**
-     * Similar to [status] except that when the code inside [action] throws an error, no
-     * cancellation of the code after [singleStatus] builder occurs, leaving the code free to run.
-     * While [status] is more realistic in most scenarios, [singleStatus] is useful for execution
-     * outside of a coroutine or when status operations are independent of each other.
+     * Prevents multiple refreshes from happening when writing to multiple states and/or statuses.
+     * After the code in the [block] is executed, a single refresh will happen to display the updated
+     * changes.
      *
-     * @see status
+     * @param states The names of the states and keys of the statuses that will be explicitly blocked
+     * from refreshing. Items must be a [String] of a state's name or a [T] of a status' key
+     * @param block Code that sets the [states] and [statuses]. If user-input states are being changed, it is
+     * recommended this code executes very quickly without long operations so that the state does not
+     * appear as "frozen."
      */
-    protected inline fun singleStatus(
-        key: T, setLoading: Boolean = true,
-        action: () -> Unit
-    ): Status {
-        if (setLoading) statuses[key] = Loading()
-        val actionStatus: Status = try {
-            mapResult(Result.success(action()))
-        } catch (t: Throwable) {
-            if (t is CancellationException) return statuses[key]
-            if (t is IssueException) t.issue else mapResult(Result.failure(t))
+    protected var _blockedStatuses: MutableSet<T> = mutableSetOf()
+    @Suppress("UNCHECKED_CAST")
+    protected inline fun commit(vararg values: Any , block: (() -> Unit)) {
+        val states: ArrayDeque<String> = ArrayDeque(states.size)
+        for(state in values) {
+            if(state is String) states += state else _blockedStatuses += state as T
         }
-
-        statuses[key] = actionStatus
-        return actionStatus
+        commit(states = states.toTypedArray(), block)
+        _blockedStatuses = mutableSetOf()
     }
 
     /**
@@ -142,8 +144,9 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
      */
     override fun toString(): String {
         return if (!debug) super.toString() else {
-            "$objectLabel states and statuses:\n" + states.toList().joinToString("\n", postfix = "\n")
-            { "${it.first} = ${it.second()}" } + "$statuses\n" + allSeries.joinToString("\n")
+            "$objectLabel states and statuses:\n" + states.toList()
+                .joinToString("\n", postfix = "\n")
+                { "${it.first} = ${it.second()}" } + "$statuses\n" + allSeries.joinToString("\n")
         }
     }
 }

@@ -3,6 +3,7 @@ package enchant.magic
 import enchant.magic.SampleStatusViewModel.Key.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.yield
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -30,10 +31,10 @@ class StatusViewModelTest {
 
         viewModel.name = "Ethan"
         viewModel.uploadName()
-        delay(10)
+        viewModel.await()
         assertIs<Success>(viewModel[Name], "Check the name status is Success")
         assertIs<Loading>(viewModel[Upload], "Check the upload status is Loading")
-        delay(50)
+        viewModel.await()
         assertIs<Success>(viewModel[Upload], "Check the upload status is Success")
         assertEquals(4, refreshes, "Check that 4 refreshes happened")
     }
@@ -45,7 +46,7 @@ class StatusViewModelTest {
 
         viewModel.name = ""
         viewModel.uploadName()
-        delay(20)
+        viewModel.await()
         assertTrue(
             viewModel[Name].code == 1,
             "Check the name status is Issue and has the error code 1"
@@ -54,14 +55,13 @@ class StatusViewModelTest {
 
         viewModel.name = "Vikram"
         viewModel.uploadName()
-        delay(10)
+        viewModel.await()
         assertEquals(
             2, viewModel[Name].code,
             "Check the name status is Issue and has the error code 2"
         )
         assertIs<NotStarted>(viewModel[Upload], "Check the upload status is NotStarted")
 
-        assertEquals(4, refreshes, "Check that 4 refreshes happened")
     }
 
     @Test
@@ -73,7 +73,7 @@ class StatusViewModelTest {
         viewModel.age = -1
 
         viewModel.validateInfo()
-        delay(10)
+        viewModel.await()
 
         assertIs<Issue>(viewModel[Name], "Check the name status is Issue")
         assertIs<Issue>(viewModel[Age], "Check the age status is Issue")
@@ -81,12 +81,10 @@ class StatusViewModelTest {
         viewModel.name = "Ethan"
         viewModel.age = 1
         viewModel.validateInfo()
-        delay(10)
+        viewModel.await()
 
         assertIs<Success>(viewModel[Name], "Check the name status is Success")
         assertIs<Success>(viewModel[Age], "Check the age status is Success")
-
-        assertEquals(8, refreshes, "Check that 8 refreshes happened")
     }
 
     @Test
@@ -133,6 +131,9 @@ class StatusViewModelTest {
 
 class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
 
+    init {
+        printChanges = true
+    }
     var name by state("")
     var age by state(-1)
 
@@ -148,7 +149,7 @@ class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
     }
 
     fun uploadName() = series.add {
-        status(Name, setLoading = false) {
+        status(Name, loading = false) {
             if (name.isEmpty()) error("Name is invalid")
             if (name.length > 5) error("Name is too long")
         }
@@ -159,10 +160,10 @@ class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
     }
 
     fun validateInfo() = series.add {
-        singleStatus(Name, setLoading = false) {
+        status(Name, loading = false, throws = false) {
             if (name.isEmpty()) error("Name is invalid")
         }
-        singleStatus(Age, setLoading = false) {
+        status(Age, loading = false, throws = false) {
             if (age < 0) error("Age is invalid")
         }
     }
@@ -173,6 +174,6 @@ class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
     override fun mapResult(result: Result<Unit>): Status = when (true) {
         result.isSuccess -> Success()
         result.exceptionOrNull()!!.message == "Name is invalid" -> Issue(code = 1)
-        else -> Issue(code  = 2)
+        else -> Issue(code = 2)
     }
 }
