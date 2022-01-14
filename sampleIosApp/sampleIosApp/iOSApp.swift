@@ -23,11 +23,11 @@ import sampleShared
     public init(wrappedValue: T){
         value = wrappedValue; flager.add(wrappedValue)
     }
-}
-private class Flager: ObservableObject {
-    @Published var flag: Bool = false
-    func add(_ viewModel: MagicViewModel) {
-        viewModel.addRefresh { self.flag = !self.flag }
+    private class Flager: ObservableObject {
+        @Published var flag: Bool = false
+        func add(_ viewModel: MagicViewModel) {
+            viewModel.addRefresh { self.flag = !self.flag }
+        }
     }
 }
 
