@@ -1,31 +1,37 @@
 package enchant.magic
 
 import enchant.magic.SampleStatusViewModel.Key.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.yield
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
-import kotlin.test.assertTrue
+import kotlinx.coroutines.*
+import kotlinx.coroutines.test.*
+import kotlin.coroutines.CoroutineContext
+import kotlin.test.*
 
 class StatusViewModelTest {
 
-    var viewModel = SampleStatusViewModel()
+    @BeforeTest
+    fun setUp(){
+        Dispatchers.setMain(StandardTestDispatcher())
+    }
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     @Test
-    fun getStatuses() {
+    fun getStatuses() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher())
+        val viewModel = SampleStatusViewModel()
         var refreshes = 0
         viewModel.addRefresh { refreshes++ }
 
         assertIs<NotStarted>(viewModel[Name], "Check the name status is NotStarted")
         assertIs<NotStarted>(viewModel[Upload], "Check the upload status is NotStarted")
         assertEquals(0, refreshes, "Check no refreshes happened")
-
     }
 
     @Test
     fun runEvent() = runTest {
+        val viewModel = SampleStatusViewModel()
         var refreshes = 0
         viewModel.addRefresh { refreshes++ }
 
@@ -41,6 +47,7 @@ class StatusViewModelTest {
 
     @Test
     fun runIssueEvent() = runTest {
+        val viewModel = SampleStatusViewModel()
         var refreshes = 0
         viewModel.addRefresh { refreshes++ }
 
@@ -66,6 +73,7 @@ class StatusViewModelTest {
 
     @Test
     fun runSingleStatusEvent() = runTest {
+        val viewModel = SampleStatusViewModel()
         var refreshes = 0
         viewModel.addRefresh { refreshes++ }
 
@@ -89,7 +97,7 @@ class StatusViewModelTest {
 
     @Test
     fun onClose() = runTest {
-        viewModel = SampleStatusViewModel()
+        val viewModel = SampleStatusViewModel()
         var refreshes = 0
         viewModel.addRefresh { refreshes++ }
 
@@ -108,6 +116,7 @@ class StatusViewModelTest {
 
     @Test
     fun printToString() = runTest {
+        val viewModel = SampleStatusViewModel()
         viewModel.name = "Jeff"
         viewModel.age = 20
         viewModel.validateInfo()
@@ -130,10 +139,10 @@ class StatusViewModelTest {
 }
 
 class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
-
     init {
         printChanges = true
     }
+
     var name by state("")
     var age by state(-1)
 

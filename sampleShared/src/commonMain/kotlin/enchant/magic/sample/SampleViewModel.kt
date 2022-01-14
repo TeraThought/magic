@@ -8,6 +8,7 @@ class SampleViewModel: StatusViewModel<SampleViewModel.Key>(
     // debug = true  (Enables debug mode)
 ) {
 
+    override val series = CancelTentativeSeries() //Overrides the default series to prevent tapjacking
     enum class Key { Submit } //A key for the "Submit" ViewModel status
 
     //Integer state
@@ -28,6 +29,5 @@ class SampleViewModel: StatusViewModel<SampleViewModel.Key>(
 
     init {
         // printChanges = true  (Prints all state and status changes when debug = true)
-        series = CancelTentativeSeries() //Overrides the default series to prevent tapjacking
     }
 }

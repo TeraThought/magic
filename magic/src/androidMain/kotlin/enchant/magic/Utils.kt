@@ -1,3 +1,4 @@
+@file:JvmName("UtilsImpl")
 package enchant.magic
 
 import kotlinx.coroutines.CoroutineDispatcher

@@ -1,13 +1,24 @@
 package enchant.magic
 
 import kotlinx.coroutines.*
-import kotlinx.coroutines.test.TestCoroutineScheduler
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.*
 import kotlin.coroutines.CoroutineContext
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class ViewModelTest {
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(StandardTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
     val viewModel = SampleViewModel()
 
     @Test

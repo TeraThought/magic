@@ -53,14 +53,9 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
 
     /**
      * The "environment" of the ViewModel's [CoroutineScope]. Can be customized to a different
-     * dispatcher by overriding this value.
+     * dispatcher (like TestDispatcher).
      */
-    override val coroutineContext: CoroutineContext = try {
-        (Dispatchers.Main + Job()).also { launch { } }
-    } catch (e: Exception) {
-        if (debug) println("Using Dispatchers.Default because no main dispatcher was found")
-        Dispatchers.Default + Job()
-    }
+    override val coroutineContext: CoroutineContext = Dispatchers.Main + Job()
 
     protected val allSeries: ArrayDeque<Series> = ArrayDeque()
 
@@ -68,11 +63,7 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
      * A [Series] that comes with the ViewModel. It is set to be a [DefaultSeries] by default, but
      * can be customized to any other type of series by setting the value.
      */
-    protected open var series: Series = DefaultSeries()
-        set(value) {
-            allSeries[0] = (field)
-            field = value
-        }
+    protected open val series: Series = DefaultSeries()
 
     /** Convenience that creates a [DefaultSeries] which inherits the [CoroutineScope] and [debug]
      * behavior of the [ViewModel].
@@ -266,5 +257,9 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
             c.resume(Unit)
         }
         block?.invoke()
+    }
+
+    init {
+        allSeries.addFirst(series)
     }
 }
