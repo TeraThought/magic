@@ -6,6 +6,7 @@ sealed class Status(val type: StatusType) {
     /** Represents when an operation has not began, and is awaiting action to begin */
     class NotStarted : Status(StatusType.NotStarted) {
         override fun toString(): String = "NotStarted"
+        override fun equals(other: Any?): Boolean = other is enchant.magic.NotStarted
     }
 
     /** Represents a loading state, when the operation is currently still going on and active.
@@ -20,6 +21,7 @@ sealed class Status(val type: StatusType) {
      */
     class Success : Status(StatusType.Success) {
         override fun toString(): String = "Success"
+        override fun equals(other: Any?): Boolean = other is enchant.magic.Success
     }
 
     /**
