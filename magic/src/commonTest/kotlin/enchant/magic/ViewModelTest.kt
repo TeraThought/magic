@@ -100,9 +100,11 @@ class ViewModelTest {
         viewModel.await()
         assertEquals("nahtE", viewModel.name)
 
-        viewModel.reverseName()
-        viewModel.await()
-        assertEquals("Ethan", viewModel.name)
+        viewModel.await(3) {
+            viewModel.reverseName()
+            viewModel.reverseName()
+            viewModel.reverseName()
+        }
     }
 
     @Test
@@ -136,12 +138,11 @@ class SampleViewModel : ViewModel(true) {
     var name by state("")
     var customName by state("", get = { value.lowercase() }, set = { value = "Mr.$it" })
 
-    fun reverseName() {
-        series.add {
-            delay(25)
-            name = name.reversed()
-        }
+    fun reverseName() = series.add {
+        delay(25)
+        name = name.reversed()
     }
+
     fun sampleCommit(name: String, customName: String) {
         commit("name", "customName") {
             this.name = name

@@ -118,7 +118,7 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
             _refreshes.values.forEach { it.invoke() }
             if (_removes.isNotEmpty()) {
                 _removes.forEach { _refreshes.remove(it) }
-                _refreshes.clear()
+                _removes.clear()
             }
             isRefreshing = false
         }
@@ -262,16 +262,21 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
      * call will resume execution when a ViewModel state changes or any other kind of ViewModel
      * refresh occurs.
      *
+     * @param awaits The number of state refreshes that need to occur before the ViewModel [await] continues
      * @param block ViewModel changes that are "awaited" to be happen. ViewModel changes should be
      * put in the block if they execute without delay and very quickly (particularly during tests).
      * This ensures that await() is registered before the ViewModel changes happen and not afterwards.
      */
-    suspend inline fun await(crossinline block: () -> Unit = { }): Unit =
+    suspend inline fun await(awaits: Int = 1, crossinline block: () -> Unit = { }): Unit =
         suspendCancellableCoroutine { c ->
+            var awaitCounter = awaits
             val id = Random.nextInt()
             _refreshes[id] = {
-                _removes.add(id)
-                c.resume(Unit)
+                awaitCounter--
+                if (awaitCounter == 0) {
+                    _removes.add(id)
+                    c.resume(Unit)
+                }
             }
             block()
         }
