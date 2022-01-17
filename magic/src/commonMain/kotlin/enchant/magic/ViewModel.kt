@@ -163,7 +163,7 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
             set(value)
             if (!added) {
                 name = name ?: property.name
-                states[name!!] = { value.toString() }
+                states[name!!] = { this.value.toString() }
                 added = true
             }
             if (printChanges) println("$objectLabel: $name = ${this.value}")
