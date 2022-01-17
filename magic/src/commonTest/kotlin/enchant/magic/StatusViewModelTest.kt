@@ -152,6 +152,18 @@ class StatusViewModelTest {
         yield()
         assertEquals(0, refreshes, "ViewModel should not refresh is a status is set to the same value")
     }
+
+    @Test
+    fun commit() = runTest {
+        val viewModel = SampleStatusViewModel()
+        var refreshes = 0
+        viewModel.addRefresh { refreshes++ }
+        viewModel.commit(Success(), Success())
+        assertEquals(1, refreshes, "ViewModel should refresh once after commit")
+        refreshes = 0
+        viewModel.commit(Success(), Success())
+        assertEquals(0, refreshes, "ViewModel should not refresh after no committed changes")
+    }
 }
 
 class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
@@ -200,5 +212,12 @@ class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
         result.isSuccess -> Success()
         result.exceptionOrNull()!!.message == "Name is invalid" -> Issue(code = 1)
         else -> Issue(code = 2)
+    }
+
+    fun commit(name: Status, age: Status) {
+        commit(Name, Age) {
+            statuses[Name] = name
+            statuses[Age] = age
+        }
     }
 }

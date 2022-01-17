@@ -168,7 +168,9 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
                 added = true
             }
             if (printChanges) println("$objectLabel: $name = ${this.value}")
-            if (name!! !in _blockedStates && value != oldValue) refresh()
+            if (this.value != oldValue) {
+                if (name!! in _blockedStates) _commitChanges = true else refresh()
+            }
         }
     }
 
@@ -227,10 +229,12 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
 
     /**
      * Prevents multiple refreshes from happening when writing to multiple states. After the code
-     * in the [block] is executed, a single refresh will happen to display the updated changes.
+     * in the [block] is executed, a single refresh will happen to display the updated changes (if any
+     * changes have occurred).
      *
      * Note that if a [CancellationException] is thrown inside the commit block, the changes will
-     * still be committed.
+     * still be committed. [commit] only supports one execution at a time, running multiple [commit]s
+     * at the same time will produce unintended results.
      *
      * @param states The names of the states that will be explicitly blocked from refreshing
      * @param block Code that sets the [states]. If user-input states are being changed, it is
@@ -238,13 +242,18 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
      * appear as "frozen."
      */
     protected var _blockedStates = setOf<String>()
+    protected var _commitChanges = false
     protected inline fun commit(vararg states: String, block: (() -> Unit)) {
         _blockedStates = states.toSet()
+        _commitChanges = false
         try {
             block()
         } catch (e: CancellationException) {
         }
-        refresh()
+        if (_commitChanges) {
+            refresh()
+            _commitChanges = false
+        }
         _blockedStates = setOf()
     }
 
@@ -257,14 +266,15 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
      * put in the block if they execute without delay and very quickly (particularly during tests).
      * This ensures that await() is registered before the ViewModel changes happen and not afterwards.
      */
-    suspend inline fun await(crossinline block: () -> Unit = { }): Unit = suspendCancellableCoroutine { c ->
-        val id = Random.nextInt()
-        _refreshes[id] = {
-            _removes.add(id)
-            c.resume(Unit)
+    suspend inline fun await(crossinline block: () -> Unit = { }): Unit =
+        suspendCancellableCoroutine { c ->
+            val id = Random.nextInt()
+            _refreshes[id] = {
+                _removes.add(id)
+                c.resume(Unit)
+            }
+            block()
         }
-        block()
-    }
 
     init {
         allSeries.addFirst(series)

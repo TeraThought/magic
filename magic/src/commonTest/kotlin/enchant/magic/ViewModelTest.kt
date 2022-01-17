@@ -117,6 +117,17 @@ class ViewModelTest {
         viewModel.name = "hi"
         assertEquals(0, updates, "ViewModel should not refresh after state is set to same value")
     }
+
+    @Test
+    fun commit() = runTest {
+        var refreshes = 0
+        viewModel.addRefresh { refreshes++ }
+        viewModel.sampleCommit("myname", "mycustomname")
+        assertEquals(1, refreshes, "ViewModel should refresh once after a commit")
+        refreshes = 0
+        viewModel.sampleCommit("myname", "mycustomname")
+        assertEquals(0, refreshes, "ViewModel should not refresh when no states have changed")
+    }
 }
 
 class SampleViewModel : ViewModel(true) {
@@ -129,6 +140,12 @@ class SampleViewModel : ViewModel(true) {
         series.add {
             delay(25)
             name = name.reversed()
+        }
+    }
+    fun sampleCommit(name: String, customName: String) {
+        commit("name", "customName") {
+            this.name = name
+            this.customName = customName
         }
     }
 

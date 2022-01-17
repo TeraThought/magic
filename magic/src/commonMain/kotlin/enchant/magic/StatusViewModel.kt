@@ -42,13 +42,14 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
         fun reset() = map.clear()
 
         /** Updates the value of the status state at the given [key] and refreshes the ViewModel */
-        operator fun set(key: T, value: Status) = set(key, value, refresh = true)
-
-        fun set(key: T, value: Status, refresh: Boolean = true) {
+        operator fun set(key: T, value: Status) {
             val oldValue = map[key]
             map[key] = value
             if (printChanges) println("$objectLabel: [$key] = $value")
-            if (refresh && key !in _blockedStatuses && value != oldValue) refresh()
+
+            if (value != oldValue) {
+                if (key in _blockedStatuses) _commitChanges = true else refresh()
+            }
         }
 
         override fun toString(): String =
@@ -101,7 +102,7 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
         } catch (t: Throwable) {
             if (t is IssueException) t.issue else mapResult(Result.failure(t))
         }
-        if(key != null) statuses[key] = actionStatus
+        if (key != null) statuses[key] = actionStatus
         if (actionStatus is Issue && throws) throw CancellationException("status() encountered an issue")
         return actionStatus
     }
@@ -118,11 +119,12 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
      * appear as "frozen."
      */
     protected var _blockedStatuses: MutableSet<T> = mutableSetOf()
+
     @Suppress("UNCHECKED_CAST")
-    protected inline fun commit(vararg values: Any , block: (() -> Unit)) {
+    protected inline fun commit(vararg values: Any, block: (() -> Unit)) {
         val states: ArrayDeque<String> = ArrayDeque(states.size)
-        for(state in values) {
-            if(state is String) states += state else _blockedStatuses += state as T
+        for (state in values) {
+            if (state is String) states += state else _blockedStatuses += state as T
         }
         commit(states = states.toTypedArray(), block)
         _blockedStatuses = mutableSetOf()
