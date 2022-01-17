@@ -136,6 +136,22 @@ class StatusViewModelTest {
             "Check that the ViewModel is converted to string properly"
         )
     }
+
+    @Test
+    fun equalSet() = runTest {
+        val viewModel = SampleStatusViewModel()
+        viewModel.name = "Dan"
+        viewModel.age = 12
+        viewModel.validateInfo()
+        yield()
+        var refreshes = 0
+        viewModel.addRefresh {
+            refreshes++
+        }
+        viewModel.validateInfo()
+        yield()
+        assertEquals(0, refreshes, "ViewModel should not refresh is a status is set to the same value")
+    }
 }
 
 class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {

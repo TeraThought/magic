@@ -104,6 +104,19 @@ class ViewModelTest {
         viewModel.await()
         assertEquals("Ethan", viewModel.name)
     }
+
+    @Test
+    fun equalSet() = runTest {
+        viewModel.await {
+            viewModel.name = "hi"
+        }
+        var updates = 0
+        viewModel.addRefresh {
+            updates++
+        }
+        viewModel.name = "hi"
+        assertEquals(0, updates, "ViewModel should not refresh after state is set to same value")
+    }
 }
 
 class SampleViewModel : ViewModel(true) {

@@ -35,7 +35,7 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
     protected inner class StatusMap(val refresh: () -> Unit) {
         val map = hashMapOf<T, Status>()
 
-        operator fun get(key: T): Status = map[key] ?: NotStarted()
+        operator fun get(key: T): Status = map.getOrPut(key) { NotStarted() }
 
 
         /** Resets all [Status] values to NotStarted */
@@ -45,9 +45,10 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
         operator fun set(key: T, value: Status) = set(key, value, refresh = true)
 
         fun set(key: T, value: Status, refresh: Boolean = true) {
+            val oldValue = map[key]
             map[key] = value
             if (printChanges) println("$objectLabel: [$key] = $value")
-            if (refresh && key !in _blockedStatuses) refresh()
+            if (refresh && key !in _blockedStatuses && value != oldValue) refresh()
         }
 
         override fun toString(): String =

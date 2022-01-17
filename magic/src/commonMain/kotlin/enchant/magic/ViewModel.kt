@@ -160,6 +160,7 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
         }
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+            val oldValue = this.value
             set(value)
             if (!added) {
                 name = name ?: property.name
@@ -167,7 +168,7 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
                 added = true
             }
             if (printChanges) println("$objectLabel: $name = ${this.value}")
-            if (name!! !in _blockedStates) refresh()
+            if (name!! !in _blockedStates && value != oldValue) refresh()
         }
     }
 
