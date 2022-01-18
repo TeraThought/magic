@@ -194,7 +194,7 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
     override fun toString(): String {
         return if (!debug) super.toString() else {
             "$objectLabel states:\n" + states.toList().joinToString("\n", postfix = "\n")
-            { "${it.first} = ${it.second()}" } + allSeries.joinToString()
+            { "${it.first} = ${it.second()}" } + allSeries.joinToString("\n")
         }
     }
 
@@ -280,8 +280,4 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
             }
             block()
         }
-
-    init {
-        allSeries.addFirst(series)
-    }
 }

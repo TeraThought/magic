@@ -126,8 +126,9 @@ class StatusViewModelTest {
         println(string)
         val objectLabel = string.takeWhile { it != ' ' }
         val seriesLabel = string.split("\n")[6].takeWhile { it != ' ' }
-        val time = string.takeLast(6).take(4).trim()
-        string = string.replace(time, "**")
+        val time = string.takeLast(5).take(2).trim()
+        println("time = ${time}")
+        string = string.replace("\\s$time\\s".toRegex()," ** ")
         assertEquals(
             "$objectLabel states and statuses:\nname = Jeff\nage = 20\n[Age] = Success\n" +
                     "[Name] = Success\n" + "[Upload] = Loading(progress=-1.0)\n$seriesLabel current " +
@@ -167,10 +168,6 @@ class StatusViewModelTest {
 }
 
 class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
-    init {
-        printChanges = true
-    }
-
     var name by state("")
     var age by state(-1)
 
