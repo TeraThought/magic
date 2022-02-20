@@ -2,8 +2,8 @@ package enchant.magic
 
 import enchant.magic.SampleStatusViewModel.Key.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
-import kotlin.coroutines.CoroutineContext
 import kotlin.test.*
 
 class StatusViewModelTest {
@@ -165,11 +165,23 @@ class StatusViewModelTest {
         viewModel.commit(Success(), Success())
         assertEquals(0, refreshes, "ViewModel should not refresh after no committed changes")
     }
+
+    @Test
+    fun stateFlowStatus() = runTest {
+        val viewModel = SampleStatusViewModel()
+        var refreshes = 0
+        viewModel.addRefresh { refreshes++ }
+        viewModel.signUp()
+        yield()
+        assertIs<Issue>(viewModel[SignedUp], "Check the status state is Issue")
+        assertEquals(2, refreshes, "ViewModel should have refreshed twice")
+    }
 }
 
 class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
     var name by state("")
     var age by state(-1)
+    private val signedUp = MutableStateFlow<Status>(NotStarted())
 
     enum class Key {
         // Input validation for the name
@@ -179,8 +191,12 @@ class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
         Age,
 
         // Tracks uploading the name to the database
-        Upload
+        Upload,
+
+        //Tracked via StateFlow
+        SignedUp
     }
+
 
     fun uploadName() = series.add {
         status(Name, loading = false) {
@@ -202,6 +218,12 @@ class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
         }
     }
 
+    fun signUp() = series.add {
+        status(SignedUp) {
+            issue("Invalid sign up",2)
+        }
+    }
+
     /* Customizing the result mapping; this is usually done in a "parent" ViewModel that other
     * ViewModels extend (so that mapResult does not need to be overridden for all functions).
     * */
@@ -216,5 +238,9 @@ class SampleStatusViewModel : StatusViewModel<SampleStatusViewModel.Key>(true) {
             statuses[Name] = name
             statuses[Age] = age
         }
+    }
+
+    init {
+        statuses.setStateFlows(mapOf(SignedUp to signedUp))
     }
 }

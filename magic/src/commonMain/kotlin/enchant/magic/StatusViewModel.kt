@@ -1,9 +1,9 @@
 package enchant.magic
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 /**
  * A more advanced version of [ViewModel] that integrates [Status] to represent the progress of
@@ -33,18 +33,29 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
     protected val statuses = StatusMap(::refresh)
 
     protected inner class StatusMap(val refresh: () -> Unit) {
-        val map = hashMapOf<T, Status>()
+        private val map = hashMapOf<T, Status>()
+        private var stateScope = CoroutineScope(coroutineContext + Job())
+        private var states: Map<T, MutableStateFlow<Status>> = mapOf()
 
-        operator fun get(key: T): Status = map.getOrPut(key) { NotStarted() }
+        fun setStateFlows(states: Map<T, MutableStateFlow<Status>>) {
+            stateScope.cancel()
+            stateScope = CoroutineScope(coroutineContext + Job())
+            states.forEach { entry ->
+                entry.value.onEach { set(entry.key, it) }.launchIn(stateScope)
+            }
+        }
 
+        operator fun get(key: T): Status =
+            states[key]?.value ?: map.getOrPut(key) { NotStarted() }
 
         /** Resets all [Status] values to NotStarted */
         fun reset() = map.clear()
 
         /** Updates the value of the status state at the given [key] and refreshes the ViewModel */
         operator fun set(key: T, value: Status) {
-            val oldValue = map[key]
-            map[key] = value
+            val oldValue = get(key)
+            if (key in states) states[key]!!.value = value
+            else map[key] = value
             if (printChanges) println("$objectLabel: [$key] = $value")
 
             if (value != oldValue) {
@@ -89,20 +100,19 @@ open class StatusViewModel<T>(debug: Boolean = false) : ViewModel(debug) {
      * @param action Lambda containing the actual code to run and monitor.
      *
      */
-
     protected inline fun status(
-        key: T?,
+        key: T,
         loading: Boolean = true,
         throws: Boolean = true,
         action: () -> Unit
     ): Status {
-        if (loading) statuses[key!!] = Loading()
+        if (loading) statuses[key] = Loading()
         val actionStatus: Status = try {
             mapResult(Result.success(action()))
         } catch (t: Throwable) {
             if (t is IssueException) t.issue else mapResult(Result.failure(t))
         }
-        if (key != null) statuses[key] = actionStatus
+        statuses[key] = actionStatus
         if (actionStatus is Issue && throws) throw CancellationException("status() encountered an issue")
         return actionStatus
     }

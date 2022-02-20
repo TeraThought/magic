@@ -1,6 +1,8 @@
 package enchant.magic
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.AfterTest
@@ -19,10 +21,10 @@ class ViewModelTest {
         Dispatchers.resetMain()
     }
 
-    val viewModel = SampleViewModel()
 
     @Test
     fun stateChange() {
+        val viewModel = SampleViewModel()
         val output = mutableListOf<String>()
         viewModel.addRefresh { output += viewModel.name }
         for (i in "Ethan".indices) {
@@ -37,6 +39,7 @@ class ViewModelTest {
 
     @Test
     fun customStateChange() {
+        val viewModel = SampleViewModel()
         var refreshes = 0
         viewModel.addRefresh { refreshes++ }
         viewModel.customName = "ETHAN"
@@ -49,6 +52,7 @@ class ViewModelTest {
 
     @Test
     fun eventRun() = runTest {
+        val viewModel = SampleViewModel()
         var refreshes = 0
         viewModel.addRefresh { refreshes += 1 }
         viewModel.name = "Ethan"
@@ -63,6 +67,7 @@ class ViewModelTest {
 
     @Test
     fun printToString() = runTest {
+        val viewModel = SampleViewModel()
         viewModel.name = ""
         viewModel.customName = "Ethan"
         val string = viewModel.toString()
@@ -77,6 +82,7 @@ class ViewModelTest {
 
     @Test
     fun onClose() = runTest {
+        val viewModel = SampleViewModel()
         var refreshes = 0
         viewModel.addRefresh { refreshes++ }
         viewModel.name = "Ethan"
@@ -91,6 +97,7 @@ class ViewModelTest {
 
     @Test
     fun await() = runTest {
+        val viewModel = SampleViewModel()
         viewModel.name = ""
         viewModel.await {
             viewModel.name = "Ethan"
@@ -109,6 +116,7 @@ class ViewModelTest {
 
     @Test
     fun equalSet() = runTest {
+        val viewModel = SampleViewModel()
         viewModel.await {
             viewModel.name = "hi"
         }
@@ -122,6 +130,7 @@ class ViewModelTest {
 
     @Test
     fun commit() = runTest {
+        val viewModel = SampleViewModel()
         var refreshes = 0
         viewModel.addRefresh { refreshes++ }
         viewModel.sampleCommit("myname", "mycustomname")
@@ -130,6 +139,48 @@ class ViewModelTest {
         viewModel.sampleCommit("myname", "mycustomname")
         assertEquals(0, refreshes, "ViewModel should not refresh when no states have changed")
     }
+
+    @Test
+    fun flow() = runTest {
+        val viewModel = SampleViewModel()
+        var refreshes = 0
+        viewModel.addRefresh { refreshes++ }
+        assertEquals(viewModel.friends, 0, "Check the default value is zero")
+        yield()
+        assertEquals(
+            1, viewModel.friends,
+            "Check state's value matches the last emitted flow value"
+        )
+        assertEquals(1, refreshes, "Check that a refresh happened")
+        yield()
+        assertEquals(
+            2, viewModel.friends,
+            "Check state's value matches the last emitted flow value"
+        )
+        assertEquals(2, refreshes, "Check that a refresh happened")
+    }
+
+    @Test
+    fun stateFlow() = runTest {
+        val viewModel = SampleViewModel()
+        var refreshes = 0
+        viewModel.addRefresh { refreshes++ }
+        assertEquals(viewModel.age, 0, "Check the default value is zero")
+        viewModel.age = 10
+        assertEquals(
+            10, viewModel.ageStateFlow.value,
+            "Check the StateFlow's value matches the state's value"
+        )
+        assertEquals(1, refreshes, "Check that a refresh happened")
+
+        viewModel.ageStateFlow.value = 20
+        assertEquals(
+            20, viewModel.age,
+            "Check the state's value matches the StateFlow's value"
+        )
+        yield()
+        assertEquals(2, refreshes, "Check that a refresh happened")
+    }
 }
 
 class SampleViewModel : ViewModel(true) {
@@ -137,6 +188,11 @@ class SampleViewModel : ViewModel(true) {
     var onCloseActionRan = false //Not a state, used to track when onClose {} runs
     var name by state("")
     var customName by state("", get = { it.lowercase() }, set = { _, new -> "Mr.$new" })
+
+    val ageStateFlow = MutableStateFlow(0)
+    var age by state(ageStateFlow)
+
+    val friends by state(flow { emit(1); yield(); emit(2) }, 0)
 
     fun reverseName() = series.add {
         delay(25)

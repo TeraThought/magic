@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
+import kotlin.properties.ReadOnlyProperty
 import kotlin.properties.ReadWriteProperty
 import kotlin.random.Random
 import kotlin.reflect.KProperty
@@ -139,11 +140,67 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
         set: (current: T, new: T) -> T = { _, new -> new }
     ): State<T> = State(initialValue, name, get, set)
 
+    /** Creates a reactive state from an [MutableStateFlow] */
+    protected fun <T> state(
+        state: MutableStateFlow<T>,
+        name: String? = null,
+        get: (T) -> T = { it },
+        set: (current: T, new: T) -> T = { _, new -> new }
+    ): State<T> {
+        val _state = State(
+            state.value,
+            name,
+            { get(state.value) },
+            { _, new -> state.value = set(state.value, new); state.value }
+        )
+        state.onEach { _state.value = it }.launchIn(this@ViewModel)
+        return _state
+    }
+
+    /** Creates a reactive read-only state from a [Flow] */
+    protected fun <T> state(
+        flow: Flow<T>,
+        initialValue: T,
+        name: String? = null,
+        get: (T) -> T = { it },
+    ): FlowState<T> = FlowState(flow, initialValue, name, get)
+
+    inner class FlowState<T>(
+        flow: Flow<T>,
+        initialValue: T,
+        var name: String?,
+        private val get: (T) -> T,
+    ) : ReadOnlyProperty<Any?, T> {
+        private var added = false
+
+        private var _field: T = initialValue
+        val value: T get() = get(_field)
+        override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+            if (!added) {
+                name = name ?: property.name
+                states[name!!] = { _field.toString() }
+                added = true
+            }
+            return value
+        }
+
+        init {
+            flow.onEach {
+                val oldValue = _field
+                _field = it
+                if (printChanges) println("$objectLabel: $name = ${this.value}")
+                if (_field != oldValue)
+                    if (name ?: error("This state is initially set manually, it must have a defined name") in _blockedStates)
+                        _commitChanges = true else refresh()
+            }.launchIn(this@ViewModel)
+        }
+    }
+
     inner class State<T>(
         initialValue: T,
         var name: String?,
-        private var get: (T) -> T,
-        private var set: (current: T, new: T) -> T,
+        private val get: (T) -> T,
+        private val set: (current: T, new: T) -> T
     ) : ReadWriteProperty<Any?, T> {
 
         private var added = false
@@ -152,8 +209,12 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
         var value: T
             get() = get(_field)
             set(value) {
+                val oldValue = _field
                 _field = set(_field, value)
                 if (printChanges) println("$objectLabel: $name = ${this.value}")
+                if (_field != oldValue)
+                    if (name ?: error("This state is initially set manually, it must have a defined name") in _blockedStates)
+                        _commitChanges = true else refresh()
             }
 
         override fun getValue(thisRef: Any?, property: KProperty<*>): T {
@@ -166,16 +227,12 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
         }
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
-            val oldValue = _field
-            this.value = value
             if (!added) {
                 name = name ?: property.name
                 states[name!!] = { _field.toString() }
                 added = true
             }
-            if (_field != oldValue)
-                if (name ?: error("This state is initially set manually, it must have a defined name") in _blockedStates)
-                    _commitChanges = true else refresh()
+            this.value = value
         }
     }
 
