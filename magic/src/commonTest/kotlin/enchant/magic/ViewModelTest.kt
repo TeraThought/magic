@@ -136,7 +136,7 @@ class SampleViewModel : ViewModel(true) {
 
     var onCloseActionRan = false //Not a state, used to track when onClose {} runs
     var name by state("")
-    var customName by state("", get = { value.lowercase() }, set = { value = "Mr.$it" })
+    var customName by state("", get = { it.lowercase() }, set = { _, new -> "Mr.$new" })
 
     fun reverseName() = series.add {
         delay(25)

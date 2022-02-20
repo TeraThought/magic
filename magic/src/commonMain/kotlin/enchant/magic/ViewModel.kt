@@ -128,49 +128,54 @@ open class ViewModel(val debug: Boolean = false) : CoroutineScope {
     /** Creates a reactive state that will [refresh] the [ViewModel] when its value changes
      *
      * @param initialValue The initial (default) value of the state
-     * @param get Custom getter function for the state. Defaults to returning the state's value. Cannot
-     * change type of state.
+     * @param get Custom getter function for the state. Defaults to returning the state's value.
      * @param set Custom setter function for the state. Defaults to assigning what is passed in.
      * Cannot change type of state.
      */
     protected fun <T> state(
         initialValue: T,
         name: String? = null,
-        get: State<T>.() -> T = { value },
-        set: State<T>.(T) -> Unit = { value = it }
+        get: (T) -> T = { it },
+        set: (current: T, new: T) -> T = { _, new -> new }
     ): State<T> = State(initialValue, name, get, set)
 
     inner class State<T>(
-        var value: T,
+        initialValue: T,
         var name: String?,
-        var get: State<T>.() -> T,
-        var set: State<T>.(T) -> Unit,
+        private var get: (T) -> T,
+        private var set: (current: T, new: T) -> T,
     ) : ReadWriteProperty<Any?, T> {
 
         private var added = false
 
+        private var _field: T = initialValue
+        var value: T
+            get() = get(_field)
+            set(value) {
+                _field = set(_field, value)
+                if (printChanges) println("$objectLabel: $name = ${this.value}")
+            }
 
         override fun getValue(thisRef: Any?, property: KProperty<*>): T {
             if (!added) {
                 name = name ?: property.name
-                states[name!!] = { value.toString() }
+                states[name!!] = { _field.toString() }
                 added = true
             }
-            return get()
+            return value
         }
 
         override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
-            val oldValue = this.value
-            set(value)
+            val oldValue = _field
+            this.value = value
             if (!added) {
                 name = name ?: property.name
-                states[name!!] = { this.value.toString() }
+                states[name!!] = { _field.toString() }
                 added = true
             }
-            if (printChanges) println("$objectLabel: $name = ${this.value}")
-            if (this.value != oldValue) {
-                if (name!! in _blockedStates) _commitChanges = true else refresh()
-            }
+            if (_field != oldValue)
+                if (name ?: error("This state is initially set manually, it must have a defined name") in _blockedStates)
+                    _commitChanges = true else refresh()
         }
     }
 
