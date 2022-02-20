@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.terathought.enchant"
-version = "1.0.0-alpha05"
+version = "1.0.0-alpha06"
 
 val compose_version = "1.0.5"
 
