@@ -10,7 +10,7 @@ Learn about magic's APIs in the [Overivew](docs/Overview.md)
 ## Installation
 Magic is hosted on Maven Central, simply add the following line to your build.gradle.kts 
 ```kotlin
-implementation("com.terathought.enchant:magic:1.0.0-alpha06")
+implementation("com.terathought.enchant:magic:1.0.0-alpha07")
 ```
 Also, add the utilities from the sample app (see below) to your project in order to observe ViewModels
 from Compose and SwiftUI clients.
